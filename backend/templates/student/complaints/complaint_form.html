@@ -1,0 +1,65 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}New Complaint{% endblock %}
+
+{% block content %}
+
+
+<h1 class="page-title">New Complaint</h1>
+
+<div class="panel">
+    <div class="panel-header">Student Information</div>
+    <div class="panel-body">
+        <div class="form-row">
+            <label>Full Name</label>
+            <div class="readonly-box">{{ student.full_name }}</div>
+        </div>
+
+        <div class="form-row">
+            <label>Phone Number</label>
+            <div class="readonly-box">{{ student.phone_number }}</div>
+        </div>
+
+        <div class="form-row">
+            <label>Department</label>
+            <div class="readonly-box">{{ student.department }}</div>
+        </div>
+
+        <div class="form-row">
+            <label>Year</label>
+            <div class="readonly-box">{{ student.get_year_display }}</div>
+        </div>
+
+        <div class="form-row">
+            <label>Room Number</label>
+            <div class="readonly-box">{{ student.room_number }}</div>
+        </div>
+
+        <div class="form-row">
+            <label>Hostel</label>
+            <div class="readonly-box">{{ student.get_hostel_display }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Complaint Form</div>
+    <div class="panel-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <label for="{{ form.description.id_for_label }}">Complaint Description</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="form-errors">{{ form.description.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="top-actions">
+                <button class="action-btn" type="submit">Submit Complaint</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

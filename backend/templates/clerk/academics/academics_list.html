@@ -1,0 +1,110 @@
+{% extends 'base/clerk_base.html' %}
+
+{% block title %}Academics Management{% endblock %}
+
+{% block content %}
+<div class="panel">
+    <div class="panel-header">Academics Management</div>
+    <div class="panel-body">
+        <form method="get" class="filter-grid" style="margin-bottom: 20px;">
+            <div>
+                <label>Search Subject</label>
+                <input class="form-control" type="text" name="search" value="{{ search }}" placeholder="Search subject">
+            </div>
+
+            <div>
+                <label>Department</label>
+                <select class="form-control" name="department">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Year</label>
+                <select class="form-control" name="year">
+                    <option value="">All Years</option>
+                    <option value="year_1" {% if selected_year == "year_1" %}selected{% endif %}>Year 1</option>
+                    <option value="year_2" {% if selected_year == "year_2" %}selected{% endif %}>Year 2</option>
+                    <option value="year_3" {% if selected_year == "year_3" %}selected{% endif %}>Year 3</option>
+                </select>
+            </div>
+
+            <div>
+                <label>File Type</label>
+                <select class="form-control" name="file_type">
+                    <option value="">All Types</option>
+                    <option value="curriculum" {% if selected_file_type == "curriculum" %}selected{% endif %}>Curriculum</option>
+                    <option value="notes" {% if selected_file_type == "notes" %}selected{% endif %}>Notes</option>
+                    <option value="pyq_pt" {% if selected_file_type == "pyq_pt" %}selected{% endif %}>PYQ PT</option>
+                    <option value="pyq_semester" {% if selected_file_type == "pyq_semester" %}selected{% endif %}>PYQ Semester</option>
+                </select>
+            </div>
+
+            <div>
+                <button class="action-btn" type="submit">Apply Filters</button>
+            </div>
+        </form>
+
+        <div class="top-actions" style="margin-bottom: 16px;">
+            <a href="{% url 'clerk_academics_list' %}">Clear Filters</a>
+        </div>
+
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th>Course code</th>
+                        <th>Department</th>
+                        <th>Year</th>
+                        <th>Type</th>
+                        <th>Uploaded By</th>
+                        <th>Size</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                    <tr>
+                        <td>{{ file.subject.name }}</td>
+                        <td>{{file.course_code}}</td>
+                        <td>{{ file.department.name }}</td>
+                        <td>{{ file.get_year_display }}</td>
+                        <td>{{ file.get_file_type_display }}</td>
+                        <td>{{ file.uploaded_by_name_snapshot }}</td>
+                        <td>{{ file.file_size }} bytes</td>
+                        <td>
+                            <a href="{% url 'clerk_academic_edit' file.pk %}">Edit</a>
+                            <a href="{% url 'clerk_academic_download' file.pk %}">Download</a>
+                            <form method="post" action="{% url 'clerk_academic_delete' file.pk %}" style="display:inline;">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Delete this file?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7">No academic files found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" style="margin-top: 20px;">
+            {% if page_obj.has_previous %}
+                <a href="?search={{ search }}&department={{ selected_department }}&year={{ selected_year }}&file_type={{ selected_file_type }}&page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+                <a href="?search={{ search }}&department={{ selected_department }}&year={{ selected_year }}&file_type={{ selected_file_type }}&page={{ page_obj.next_page_number }}">Next</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

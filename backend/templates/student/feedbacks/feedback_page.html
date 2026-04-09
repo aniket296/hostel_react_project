@@ -1,0 +1,115 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}Hostel Feedback{% endblock %}
+
+{% block content %}
+<div class="student-page-wrap">
+    <div class="page-header">
+        <h1 class="page-title">Hostel Feedback</h1>
+    </div>
+
+    {% if page_mode == "no_form" %}
+        <div class="panel">
+            <div class="panel-header">Hostel Feedback</div>
+            <div class="panel-body">
+                <p>No active feedback form available right now.</p>
+            </div>
+        </div>
+
+    {% elif page_mode == "already_submitted" %}
+        <div class="panel">
+            <div class="panel-header">{{ feedback_form.name }}</div>
+            <div class="panel-body">
+                <p>You have already submitted your hostel feedback for the active form.</p>
+            </div>
+        </div>
+
+    {% elif page_mode == "active_form" %}
+        <div class="panel feedback-student-panel">
+            <div class="panel-header">{{ feedback_form.name }}</div>
+            <div class="panel-body">
+                <p><strong>Hostel:</strong> {{ feedback_form.get_hostel_display }}</p>
+                <p><strong>Available Until:</strong> {{ feedback_form.expires_at }}</p>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="feedback-question-list">
+                        {% for question in questions %}
+                            <div class="feedback-question-item" style="margin-bottom: 16px;">
+                                <label for="question_{{ question.id }}">
+                                    {{ forloop.counter }}. {{ question.question_text }}
+                                </label>
+
+                                {% if question.question_type == "rating" %}
+                                    <select
+                                        name="question_{{ question.id }}"
+                                        id="question_{{ question.id }}"
+                                        class="form-control"
+                                        required
+                                    >
+                                        <option value="">Select Rating</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+
+                                {% elif question.question_type == "radio" %}
+                                    <div style="margin-top: 8px;">
+                                        {% for option in question.get_radio_options_list %}
+                                            <div style="margin-bottom: 6px;">
+                                                <label style="font-weight: normal;">
+                                                    <input
+                                                        type="radio"
+                                                        name="question_{{ question.id }}"
+                                                        value="{{ option }}"
+                                                        required
+                                                    >
+                                                    {{ option }}
+                                                </label>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+
+                                {% elif question.question_type == "text" %}
+                                    <input
+                                        type="text"
+                                        name="question_{{ question.id }}"
+                                        id="question_{{ question.id }}"
+                                        class="form-control"
+                                        required
+                                    >
+
+                                {% elif question.question_type == "textarea" %}
+                                    <textarea
+                                        name="question_{{ question.id }}"
+                                        id="question_{{ question.id }}"
+                                        class="form-control"
+                                        rows="4"
+                                        required
+                                    ></textarea>
+
+                                {% else %}
+                                    <input
+                                        type="text"
+                                        name="question_{{ question.id }}"
+                                        id="question_{{ question.id }}"
+                                        class="form-control"
+                                        required
+                                    >
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="top-actions" style="margin-top: 20px;">
+                        <button type="submit" class="action-btn">Submit Feedback</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ system_title }}{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+    <link rel="stylesheet" href="{% static 'css/layout.css' %}">
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="stylesheet" href="{% static 'css/forms.css' %}">
+    <link rel="stylesheet" href="{% static 'css/tables.css' %}">
+    <link rel="stylesheet" href="{% static 'css/student_mobile.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <div class="site-header-inner">
+            <div class="site-brand">
+                <div class="site-brand-logo">
+                    {% if college_logo %}
+                        <img src="{{ college_logo.url }}" alt="{{ college_name }} Logo">
+                    {% else %}
+                        <img src="{% static 'images/gpn_logo.jpg' %}" alt="{{ college_name }} Logo">
+                    {% endif %}
+                </div>
+                <div class="site-brand-text">
+                    <h1>{{ college_name }}</h1>
+                    <p>{{ system_title }}</p>
+                </div>
+            </div>
+
+            {% if request.user.is_authenticated %}
+            <div class="site-user-area">
+                <div class="site-user">
+                    <div><strong>{{ request.user.get_display_name }}</strong></div>
+                    <div>{{ request.user.get_role_display }}</div>
+                </div>
+
+                <div class="site-header-actions">
+                    <button type="button" class="header-btn" onclick="history.back()">← Back</button>
+
+                    {% if request.user.role == 'student' %}
+                        <a class="header-btn" href="{% url 'student_dashboard' %}">Dashboard</a>
+                    {% elif request.user.role == 'clerk' %}
+                        <a class="header-btn" href="{% url 'clerk_dashboard' %}">Dashboard</a>
+                    {% elif request.user.role == 'admin' %}
+                        <a class="header-btn" href="{% url 'admin_dashboard' %}">Dashboard</a>
+                    {% endif %}
+
+                    <form method="post" action="{% url 'logout' %}" class="header-logout-form">
+                        {% csrf_token %}
+                        <button type="submit" class="header-btn header-btn-danger">Logout</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+
+    {% include 'partials/messages.html' %}
+
+    {% block body_wrapper %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    {% endblock %}
+
+    <footer class="footer">
+        © Government Polytechnic Nagpur {{ current_year }} 
+        <br><br>
+        Developed by IT Department Batch 2023-26
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

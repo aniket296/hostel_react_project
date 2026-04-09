@@ -1,0 +1,164 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Create Hostel Feedback Form{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Create Hostel Feedback Form</h1>
+
+<div class="panel">
+    <div class="panel-header">Feedback Form Details</div>
+    <div class="panel-body">
+
+        {% if form.non_field_errors %}
+            <div class="form-error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <form method="post" id="feedback-form">
+            {% csrf_token %}
+
+            <div class="form-grid">
+                <div>
+                    <label>Form Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div class="form-error">{{ form.name.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label>Hostel</label>
+                    {{ form.hostel }}
+                    {% if form.hostel.errors %}
+                        <div class="form-error">{{ form.hostel.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label>Time Limit</label>
+                    {{ form.duration_hours }}
+                    {% if form.duration_hours.errors %}
+                        <div class="form-error">{{ form.duration_hours.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="panel" style="margin-top: 20px;">
+                <div class="panel-header">Questions</div>
+                <div class="panel-body">
+                    <div id="questions-container">
+
+                        <div class="question-row" style="margin-bottom: 20px; border: 1px solid #ddd; padding: 12px; border-radius: 6px;">
+                            <label><strong>Question 1</strong></label>
+
+                            <div style="margin-top: 10px;">
+                                <label>Question Text</label>
+                                <input type="text" name="questions[]" class="form-control" placeholder="Enter feedback question">
+                            </div>
+
+                            <div style="margin-top: 10px;">
+                                <label>Answer Type</label>
+                                <select name="question_types[]" class="form-control question-type-select">
+                                    <option value="rating">Rating Dropdown (1–5)</option>
+                                    <option value="radio">Radio Choice</option>
+                                    <option value="text">Text Input</option>
+                                    <option value="textarea">Textarea</option>
+                                </select>
+                            </div>
+
+                            <div class="radio-options-box" style="margin-top: 10px; display: none;">
+                                <label>Radio Options</label>
+                                <textarea
+                                    name="radio_options[]"
+                                    class="form-control"
+                                    rows="4"
+                                    placeholder="Enter one option per line&#10;Example:&#10;Good&#10;Average&#10;Poor"
+                                ></textarea>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="top-actions" style="margin-top: 12px;">
+                        <button type="button" class="action-btn" id="add-question-btn">Add Question</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="top-actions" style="margin-top: 20px;">
+                <button type="submit" class="action-btn">Create & Activate</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const questionsContainer = document.getElementById("questions-container");
+    const addQuestionBtn = document.getElementById("add-question-btn");
+
+    function bindQuestionTypeLogic(wrapper) {
+        const typeSelect = wrapper.querySelector(".question-type-select");
+        const radioBox = wrapper.querySelector(".radio-options-box");
+
+        function toggleRadioBox() {
+            if (typeSelect.value === "radio") {
+                radioBox.style.display = "block";
+            } else {
+                radioBox.style.display = "none";
+            }
+        }
+
+        typeSelect.addEventListener("change", toggleRadioBox);
+        toggleRadioBox();
+    }
+
+    bindQuestionTypeLogic(document.querySelector(".question-row"));
+
+    addQuestionBtn.addEventListener("click", function () {
+        const currentCount = questionsContainer.querySelectorAll(".question-row").length;
+        const nextNumber = currentCount + 1;
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "question-row";
+        wrapper.style.marginBottom = "20px";
+        wrapper.style.border = "1px solid #ddd";
+        wrapper.style.padding = "12px";
+        wrapper.style.borderRadius = "6px";
+
+        wrapper.innerHTML = `
+            <label><strong>Question ${nextNumber}</strong></label>
+
+            <div style="margin-top: 10px;">
+                <label>Question Text</label>
+                <input type="text" name="questions[]" class="form-control" placeholder="Enter feedback question">
+            </div>
+
+            <div style="margin-top: 10px;">
+                <label>Answer Type</label>
+                <select name="question_types[]" class="form-control question-type-select">
+                    <option value="rating">Rating Dropdown (1–5)</option>
+                    <option value="radio">Radio Choice</option>
+                    <option value="text">Text Input</option>
+                    <option value="textarea">Textarea</option>
+                </select>
+            </div>
+
+            <div class="radio-options-box" style="margin-top: 10px; display: none;">
+                <label>Radio Options</label>
+                <textarea
+                    name="radio_options[]"
+                    class="form-control"
+                    rows="4"
+                    placeholder="Enter one option per line&#10;Example:&#10;Good&#10;Average&#10;Poor"
+                ></textarea>
+            </div>
+        `;
+
+        questionsContainer.appendChild(wrapper);
+        bindQuestionTypeLogic(wrapper);
+    });
+});
+</script>
+{% endblock %}

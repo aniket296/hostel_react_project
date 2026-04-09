@@ -1,0 +1,35 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block body_wrapper %}
+<div class="page-shell">
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-logo">
+                {% if college_logo %}
+                    <img src="{{ college_logo.url }}" alt="{{ college_name }} Logo">
+                {% else %}
+                    <img src="{% static 'images/gpn_logo.jpg' %}" alt="{{ college_name }} Logo">
+                {% endif %}
+            </div>
+            <h2>Clerk Panel</h2>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li><a href="{% url 'clerk_dashboard' %}">Dashboard</a></li>
+            <li><a href="{% url 'clerk_student_list' %}">Students</a></li>
+            <li><a href="{% url 'clerk_academics_list' %}">Academics</a></li>
+            <li><a href="{% url 'clerk_complaint_status_list' 'new' %}">New Complaints</a></li>
+            <li><a href="{% url 'clerk_complaint_status_list' 'in_progress' %}">In Progress</a></li>
+            <li><a href="{% url 'clerk_complaint_status_list' 'completed' %}">Completed</a></li>
+            <li><a href="{% url 'clerk_complaint_status_list' 'unsolved' %}">Unsolved</a></li>
+            <li><a href="{% url 'clerk_complaint_history' %}">Complaint History</a></li>
+        </ul>
+    </aside>
+
+    <section class="main-content">
+        {% block content %}{% endblock %}
+    </section>
+</div>
+{% endblock %}

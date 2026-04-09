@@ -1,0 +1,62 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}View Feedback Form{% endblock %}
+
+{% block content %}
+<h1 class="page-title">View Feedback Form</h1>
+
+<div class="panel">
+    <div class="panel-header">Form Details</div>
+    <div class="panel-body">
+        <p><strong>Form Name:</strong> {{ feedback_form.name }}</p>
+        <p><strong>Hostel:</strong> {{ feedback_form.get_hostel_display }}</p>
+        <p><strong>Status:</strong> {{ feedback_form.get_status_display }}</p>
+        <p><strong>Created At:</strong> {{ feedback_form.created_at }}</p>
+        <p><strong>Expires At:</strong> {{ feedback_form.expires_at }}</p>
+    </div>
+</div>
+
+<div class="panel" style="margin-top: 20px;">
+    <div class="panel-header">Questions</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Question</th>
+                    <th>Answer Type</th>
+                    <th>Radio Options</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in feedback_form.questions.all %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ question.question_text }}</td>
+                        <td>{{ question.get_question_type_display }}</td>
+                        <td>
+                            {% if question.question_type == "radio" %}
+                                {% for option in question.get_radio_options_list %}
+                                    <div>{{ option }}</div>
+                                {% empty %}
+                                    <div>No options defined</div>
+                                {% endfor %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4">No questions available in this form.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="top-actions" style="margin-top: 20px;">
+    <a class="action-btn" href="{% url 'admin_feedback_form_list' %}">Back</a>
+</div>
+{% endblock %}

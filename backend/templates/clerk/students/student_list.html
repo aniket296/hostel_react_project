@@ -1,0 +1,149 @@
+{% extends 'base/clerk_base.html' %}
+
+{% block title %}Student Management{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ page_heading|default:"Clerk Student Management" }}</h1>
+
+<div class="top-actions">
+    <a href="{% url 'clerk_student_add' %}">Add Student</a>
+    <a href="{% url 'clerk_student_import' %}">Import Students</a>
+    <a href="{% url 'clerk_student_export' %}?search={{ search }}&department={{ selected_department }}&year={{ selected_year }}&gender={{ selected_gender }}">Export Students</a>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Student Filters</div>
+    <div class="panel-body">
+        <form method="get" class="filter-grid">
+            <div>
+                <label>Search Student</label>
+                <input class="form-control" type="text" name="search" value="{{ search }}">
+            </div>
+
+            <div>
+                <label>Department</label>
+                <select class="form-control" name="department">
+                    <option value="">All</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Year</label>
+                <select class="form-control" name="year">
+                    <option value="">All</option>
+                    <option value="year_1" {% if selected_year == "year_1" %}selected{% endif %}>Year 1</option>
+                    <option value="year_2" {% if selected_year == "year_2" %}selected{% endif %}>Year 2</option>
+                    <option value="year_3" {% if selected_year == "year_3" %}selected{% endif %}>Year 3</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Gender</label>
+                <select class="form-control" name="gender">
+                    <option value="">All</option>
+                    <option value="male" {% if selected_gender == "male" %}selected{% endif %}>Male</option>
+                    <option value="female" {% if selected_gender == "female" %}selected{% endif %}>Female</option>
+                </select>
+            </div>
+
+            <div>
+                <button class="action-btn" type="submit">Apply Filters</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<form method="post" action="{% url 'clerk_student_bulk_delete' %}">
+    {% csrf_token %}
+
+    <div class="panel">
+        <div class="panel-header">Student Records</div>
+        <div class="panel-body table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>
+                            <input type="checkbox" id="select-all-students">
+                        </th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Department</th>
+                        <th>Year</th>
+                        <th>Gender</th>
+                        <th>Hostel</th>
+                        <th>Room</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                    <tr>
+                        <td><input type="checkbox" name="student_ids" value="{{ student.id }}" class="student-checkbox"></td>
+                        <td>{{ student.full_name }}</td>
+                        <td>{{ student.phone_number }}</td>
+                        <td>{{ student.department }}</td>
+                        <td>{{ student.get_year_display }}</td>
+                        <td>{{ student.get_gender_display }}</td>
+                        <td>{{ student.get_hostel_display }}</td>
+                        <td>{{ student.room_number }}</td>
+                        <td>
+                            <a href="{% url 'clerk_student_edit' student.pk %}">Edit</a>
+                            <form method="post" action="{% url 'clerk_student_delete' student.pk %}" class="inline-form">
+                                {% csrf_token %}
+                                <button type="submit" class="inline-btn action-btn-danger" onclick="return confirm('Delete this student?')">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9">No students found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="top-actions">
+        <button class="action-btn action-btn-danger" type="submit" onclick="return confirm('Delete selected students?')">Bulk Delete Selected</button>
+    </div>
+</form>
+
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&search={{ search }}&department={{ selected_department }}&year={{ selected_year }}&gender={{ selected_gender }}">Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&search={{ search }}&department={{ selected_department }}&year={{ selected_year }}&gender={{ selected_gender }}">Next</a>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const selectAll = document.getElementById("select-all-students");
+    const checkboxes = document.querySelectorAll(".student-checkbox");
+
+    if (!selectAll) return;
+
+    selectAll.addEventListener("change", function () {
+        checkboxes.forEach(function (checkbox) {
+            checkbox.checked = selectAll.checked;
+        });
+    });
+
+    checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener("change", function () {
+            const total = checkboxes.length;
+            const checked = document.querySelectorAll(".student-checkbox:checked").length;
+            selectAll.checked = total > 0 && total === checked;
+        });
+    });
+});
+</script>
+{% endblock %}

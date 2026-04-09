@@ -1,0 +1,77 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}Upload Academic File{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Upload Academic File</h1>
+
+<div class="panel">
+    <div class="panel-header">Academic File Upload</div>
+    <div class="panel-body">
+        <div class="top-note">
+            Upload notes, curriculum, or previous year question papers. Make sure the department, year, file type, and subject are correct before submitting.
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors" style="margin-bottom: 14px;">
+                    {{ form.non_field_errors|striptags }}
+                </div>
+            {% endif %}
+
+            <div class="form-row">
+                <label for="{{ form.subject_name.id_for_label }}">Subject Name</label>
+                {{ form.subject_name }}
+                {% if form.subject_name.errors %}
+                    <div class="form-errors">{{ form.subject_name.errors|striptags }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label>Course Code</label>
+                {{ form.course_code }}
+                {% if form.course_code.errors %}
+                    <div class="form-error">{{ form.course_code.errors }}</div>
+                {% endif %}
+            </div>
+            <div class="form-row">
+                <label for="{{ form.department.id_for_label }}">Department</label>
+                {{ form.department }}
+                {% if form.department.errors %}
+                    <div class="form-errors">{{ form.department.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.year.id_for_label }}">Year</label>
+                {{ form.year }}
+                {% if form.year.errors %}
+                    <div class="form-errors">{{ form.year.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.file_type.id_for_label }}">File Type</label>
+                {{ form.file_type }}
+                {% if form.file_type.errors %}
+                    <div class="form-errors">{{ form.file_type.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-row">
+                <label for="{{ form.file.id_for_label }}">Choose File</label>
+                {{ form.file }}
+                {% if form.file.errors %}
+                    <div class="form-errors">{{ form.file.errors|striptags }}</div>
+                {% endif %}
+            </div>
+
+            <div class="top-actions" style="margin-top: 8px;">
+                <button class="action-btn" type="submit">Upload File</button>
+                <a class="action-btn" href="{% url 'student_academics_list' %}">Back to Academics</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

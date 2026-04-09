@@ -1,0 +1,50 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Clerk Management{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Clerk Management</h1>
+
+<div class="top-actions">
+    <a href="{% url 'clerk_add' %}">Add Clerk</a>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Clerk Records</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Phone Number</th>
+                    <th>Assigned Hostel</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for clerk in clerks %}
+                <tr>
+                    <td>{{ clerk.id }}</td>
+                    <td>{{ clerk.full_name }}</td>
+                    <td>{{ clerk.user.username }}</td>
+                    <td>{{ clerk.phone_number }}</td>
+                    <td>{{ clerk.get_assigned_hostel_display }}</td>
+                    <td>
+                        <a href="{% url 'clerk_edit' clerk.pk %}">Edit</a>
+
+                        <form method="post" action="{% url 'clerk_delete' clerk.pk %}" class="inline-form">
+                            {% csrf_token %}
+                            <button class="inline-btn action-btn-danger" type="submit" onclick="return confirm('Delete this clerk?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6">No clerks found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

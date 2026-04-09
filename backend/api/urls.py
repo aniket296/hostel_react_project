@@ -1,0 +1,34 @@
+from django.urls import path
+from .views import (
+    LoginApiView, RefreshApiView, LogoutApiView, MeApiView, DashboardSummaryApiView,
+    DepartmentListCreateApiView, StudentListCreateApiView, StudentDetailApiView,
+    ClerkListCreateApiView, ClerkDetailApiView, ComplaintListApiView, StudentComplaintCreateApiView,
+    ComplaintActionApiView, AcademicListCreateApiView, AcademicDetailApiView, SubjectListApiView,
+    FeedbackFormListApiView, FeedbackSubmitApiView, FeedbackAnalysisApiView,
+    LockedAccountsApiView, SystemSettingsApiView, BackupListApiView,
+)
+
+urlpatterns = [
+    path("auth/login/", LoginApiView.as_view()),
+    path("auth/refresh/", RefreshApiView.as_view()),
+    path("auth/logout/", LogoutApiView.as_view()),
+    path("auth/me/", MeApiView.as_view()),
+    path("dashboard/summary/", DashboardSummaryApiView.as_view()),
+    path("departments/", DepartmentListCreateApiView.as_view()),
+    path("students/", StudentListCreateApiView.as_view()),
+    path("students/<int:pk>/", StudentDetailApiView.as_view()),
+    path("clerks/", ClerkListCreateApiView.as_view()),
+    path("clerks/<int:pk>/", ClerkDetailApiView.as_view()),
+    path("complaints/", ComplaintListApiView.as_view()),
+    path("student/complaints/", StudentComplaintCreateApiView.as_view()),
+    path("complaints/<int:pk>/<str:action>/", ComplaintActionApiView.as_view()),
+    path("subjects/", SubjectListApiView.as_view()),
+    path("academics/", AcademicListCreateApiView.as_view()),
+    path("academics/<int:pk>/", AcademicDetailApiView.as_view()),
+    path("feedback/forms/", FeedbackFormListApiView.as_view()),
+    path("feedback/forms/<int:pk>/submit/", FeedbackSubmitApiView.as_view()),
+    path("feedback/analysis/<int:pk>/", FeedbackAnalysisApiView.as_view()),
+    path("locked-accounts/", LockedAccountsApiView.as_view()),
+    path("system-settings/", SystemSettingsApiView.as_view()),
+    path("backups/", BackupListApiView.as_view()),
+]

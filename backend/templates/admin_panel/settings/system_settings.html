@@ -1,0 +1,18 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}System Settings{% endblock %}
+
+{% block content %}
+<h1 class="page-title">System Settings</h1>
+
+<div class="panel">
+    <div class="panel-header">Portal Configuration</div>
+    <div class="panel-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="action-btn" type="submit">Save Settings</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

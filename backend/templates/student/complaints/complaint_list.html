@@ -1,0 +1,83 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}My Complaints{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">My Complaints</h1>
+
+<div class="panel">
+    <div class="panel-header">Complaint Filters</div>
+    <div class="panel-body">
+        <form method="get" class="filter-grid">
+            <div>
+                <label for="status">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All</option>
+                    <option value="new" {% if selected_status == "new" %}selected{% endif %}>New</option>
+                    <option value="in_progress" {% if selected_status == "in_progress" %}selected{% endif %}>In Progress</option>
+                    <option value="completed" {% if selected_status == "completed" %}selected{% endif %}>Completed</option>
+                    <option value="solved" {% if selected_status == "solved" %}selected{% endif %}>Solved</option>
+                    <option value="unsolved" {% if selected_status == "unsolved" %}selected{% endif %}>Unsolved</option>
+                </select>
+            </div>
+
+            <div>
+                <label>Total Complaints</label>
+                <div class="readonly-box">{{ total_count }}</div>
+            </div>
+
+            <div>
+                <button class="action-btn" type="submit">Apply Filter</button>
+                
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="student-record-list">
+    {% for complaint in complaints %}
+    <div class="student-record-box">
+        <div class="student-record-head">
+            <div class="student-record-title">Complaint #{{ complaint.id }}</div>
+            <div class="student-record-badge">{{ complaint.get_status_display }}</div>
+        </div>
+
+        <div class="student-record-body">
+            <div><strong>Description:</strong> {{ complaint.description }}</div>
+            <div><strong>Room Number:</strong> {{ complaint.room_number_snapshot }}</div>
+            <div><strong>Worker:</strong> {{ complaint.worker_name|default:"Not assigned" }}</div>
+            <div><strong>Date:</strong> {{ complaint.created_at|date:"d M Y, h:i A" }}</div>
+        </div>
+
+        <div class="student-record-actions">
+            <a class="action-btn" href="{% url 'student_complaint_detail' complaint.pk %}">View Timeline</a>
+
+            {% if complaint.status == 'completed' %}
+            <form method="post" action="{% url 'student_mark_solved' complaint.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button class="action-btn" type="submit">Mark Solved</button>
+            </form>
+
+            <form method="post" action="{% url 'student_mark_unsolved' complaint.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button class="action-btn action-btn-danger" type="submit">Mark Unsolved</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-box">No complaints found.</div>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?status={{ selected_status }}&page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?status={{ selected_status }}&page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+{% endblock %}

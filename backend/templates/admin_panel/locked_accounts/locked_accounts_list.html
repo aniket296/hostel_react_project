@@ -1,0 +1,44 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Locked Accounts{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Locked Accounts</h1>
+
+<div class="panel">
+    <div class="panel-header">Locked User Records</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Phone Number</th>
+                    <th>Role</th>
+                    <th>Failed Attempts</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in locked_users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username|default:"-" }}</td>
+                    <td>{{ user.phone_number|default:"-" }}</td>
+                    <td>{{ user.get_role_display }}</td>
+                    <td>{{ user.failed_login_attempts }}</td>
+                    <td>
+                        <form method="post" action="{% url 'unlock_account' user.pk %}" class="inline-form">
+                            {% csrf_token %}
+                            <button class="inline-btn" type="submit" onclick="return confirm('Unlock this account?')">Unlock</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6">No locked accounts found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

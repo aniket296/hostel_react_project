@@ -1,0 +1,71 @@
+{% extends 'base/clerk_base.html' %}
+
+{% block title %}Unsolved Complaints{% endblock %}
+
+{% block content %}
+<div style="padding: 30px;">
+    <h1>Unsolved Complaints</h1>
+
+    <form method="get" style="margin-bottom: 20px;">
+        <input type="text" name="search" placeholder="Search by room or worker" value="{{ search }}">
+        <button type="submit">Search</button>
+    </form>
+    <p>
+    <a href="{% url 'clerk_complaint_export' %}?status={{ status }}&search={{ search }}">Export Complaints</a>
+</p>
+    <table border="1" cellpadding="10" cellspacing="0" width="100%">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Student</th>
+                <th>Room</th>
+                <th>Worker</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for complaint in complaints %}
+            <tr>
+                <td>{{ complaint.id }}</td>
+                <td>{{ complaint.description }}</td>
+                <td>{{ complaint.student_name_snapshot }}</td>
+                <td>{{ complaint.room_number_snapshot }}</td>
+                <td>{{ complaint.worker_name|default:"-" }}</td>
+                <td>{{ complaint.get_status_display }}</td>
+                <td>{{ complaint.created_at }}</td>
+                <td>
+                    <a href="{% url 'clerk_complaint_detail' complaint.pk %}">View</a>
+
+                    <form method="post"
+                          action="{% url 'clerk_assign_worker' complaint.pk %}"
+                          style="display:inline;">
+                        {% csrf_token %}
+                        <input type="text" name="worker_name" placeholder="Worker name" required>
+                        <button type="submit">Reopen + Assign</button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8">No complaints found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+        {% if page_obj.has_previous %}
+            <a href="?search={{ search }}&page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+            <a href="?search={{ search }}&page={{ page_obj.next_page_number }}">Next</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

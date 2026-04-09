@@ -1,0 +1,72 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Global Admin Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Global Admin Dashboard</h1>
+
+<div class="dashboard-section">
+    <div class="section-strip">Complaint Section</div>
+        <div class="dashboard-plain-grid">
+            
+            <a class="action-btn" href="{% url 'admin_complaint_status_list' 'new' %}">
+                New Complaints ({{ new_count }})
+            </a>
+
+            <a class="action-btn" href="{% url 'admin_complaint_status_list' 'in_progress' %}">
+                In Progress ({{ in_progress_count }})
+            </a>
+
+            <a class="action-btn" href="{% url 'admin_complaint_status_list' 'completed' %}">
+                Completed ({{ completed_count }})
+            </a>
+
+            <a class="action-btn" href="{% url 'admin_complaint_status_list' 'solved' %}">
+                Solved ({{ solved_count }})
+            </a>
+
+            <a class="action-btn" href="{% url 'admin_complaint_status_list' 'unsolved' %}">
+                Unsolved ({{ unsolved_count }})
+            </a>
+        </div>
+    
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">Student and Hostel Administration</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'admin_student_list' %}">Student Management</a>
+        <a class="action-btn" href="{% url 'clerk_list' %}">Clerk Management</a>
+        <a class="action-btn" href="{% url 'locked_accounts_list' %}">Locked Accounts</a>
+        <a class="action-btn" href="{% url 'department_list' %}">Departments</a>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">Academic and System Tools</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'admin_academics_list' %}">Academics</a>
+        <a class="action-btn" href="{% url 'system_settings' %}">System Settings</a>
+        <a class="action-btn" href="{% url 'backup_list' %}">Backups</a>
+        <a class="action-btn" href="{% url 'admin_profile' %}">Admin Profile</a>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">Feedback section </div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'admin_feedback_create' %}">Create Feedback Form</a>
+        <a class="action-btn" href="{% url 'admin_feedback_form_list' %}">Edit Feedback Form</a>
+        <a class="action-btn" href="{% url 'admin_feedback_analysis_list' %}">Analyse Feedback</a>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">Quick Actions</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'admin_student_import' %}">Import Students</a>
+        <a class="action-btn" href="{% url 'admin_student_export' %}">Export Students</a>
+        <a class="action-btn" href="{% url 'admin_complaint_export' %}">Export Complaints</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Student Dashboard</h1>
+
+<div class="dashboard-section">
+    <div class="section-strip">Student Services</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'student_complaint_home' %}">Complaint Section</a>
+        <a class="action-btn" href="{% url 'student_academics_home' %}">Academics Section</a>
+        <a class="action-btn" href="{% url 'student_feedback_page' %}">Hostel Feedback</a>
+    </div>
+</div>
+
+
+{% endblock %}

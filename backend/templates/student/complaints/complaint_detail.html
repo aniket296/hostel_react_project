@@ -1,0 +1,30 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}Complaint Timeline{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Complaint Timeline</h1>
+
+<div class="panel">
+    <div class="panel-header">Complaint Details</div>
+    <div class="panel-body">
+        <p><strong>Description:</strong> {{ complaint.description }}</p>
+        <p><strong>Current Status:</strong> {{ complaint.get_status_display }}</p>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Status History</div>
+    <div class="panel-body">
+        {% for item in complaint.status_history.all %}
+            <div class="timeline-entry">
+                <p><strong>Status:</strong> {{ item.get_status_display }}</p>
+                <p><strong>Timestamp:</strong> {{ item.timestamp }}</p>
+            </div>
+        {% empty %}
+            <div class="empty-box">No timeline available.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

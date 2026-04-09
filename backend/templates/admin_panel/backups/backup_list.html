@@ -1,0 +1,56 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Database Backups{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Database Backups</h1>
+
+<div class="top-actions">
+    <form method="post" action="{% url 'backup_create' %}" class="inline-form">
+        {% csrf_token %}
+        <button class="action-btn" type="submit">Create Backup</button>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Backup Records</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Created By</th>
+                    <th>Created At</th>
+                    <th>File</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for backup in backups %}
+                <tr>
+                    <td>{{ backup.id }}</td>
+                    <td>{{ backup.created_by_user }}</td>
+                    <td>{{ backup.created_at }}</td>
+                    <td>{{ backup.backup_file.name }}</td>
+                    <td>
+                        <a href="{% url 'backup_download' backup.pk %}">Download</a>
+
+                        <form method="post" action="{% url 'backup_restore' backup.pk %}" class="inline-form">
+                            {% csrf_token %}
+                            <button class="inline-btn" type="submit" onclick="return confirm('Restore this backup? This will overwrite current database data.')">Restore</button>
+                        </form>
+
+                        <form method="post" action="{% url 'backup_delete' backup.pk %}" class="inline-form">
+                            {% csrf_token %}
+                            <button class="inline-btn action-btn-danger" type="submit" onclick="return confirm('Delete this backup record and file?')">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No backups found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

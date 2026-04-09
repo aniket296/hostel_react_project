@@ -1,0 +1,29 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block body_wrapper %}
+<div class="page-shell">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-logo">
+                {% if college_logo %}
+                    <img src="{{ college_logo.url }}" alt="{{ college_name }} Logo">
+                {% else %}
+                    <img src="{% static 'images/gpn_logo.jpg' %}" alt="{{ college_name }} Logo">
+                {% endif %}
+            </div>
+            <h2>Admin Panel</h2>
+        </div>
+
+        <ul class="sidebar-nav">
+            <li><a href="{% url 'admin_dashboard' %}">Global</a></li>
+            <li><a href="{% url 'admin_boys_hostel_dashboard' %}">♂ Boys Hostel</a></li>
+            <li><a href="{% url 'admin_girls_hostel_dashboard' %}">♀ Girls Hostel</a></li>
+        </ul>
+    </aside>
+
+    <section class="main-content">
+        {% block content %}{% endblock %}
+    </section>
+</div>
+{% endblock %}

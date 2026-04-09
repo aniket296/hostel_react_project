@@ -1,0 +1,93 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Feedback Analysis{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Feedback Analysis</h1>
+
+<div class="top-actions" style="margin-top: 20px;">
+    <a class="action-btn" href="{% url 'admin_feedback_analysis_export' feedback_form.pk %}">Export CSV</a>
+    <a class="action-btn" href="{% url 'admin_feedback_analysis_list' %}">Back</a>
+</div>
+
+<!-- 🔹 TABLE 1: OVERALL ANALYSIS -->
+<div class="panel" style="margin-top: 20px;">
+    <div class="panel-header">Overall Feedback Analysis</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Question</th>
+                    <th>Most Frequent Rating</th>
+                    <th>Average Rating</th>
+                    <th>1</th>
+                    <th>2</th>
+                    <th>3</th>
+                    <th>4</th>
+                    <th>5</th>
+                    <th>Total Responses</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in question_stats %}
+                    <tr>
+                        <td>{{ item.question.question_text }}</td>
+                        <td>{{ item.most_frequent_rating }}</td>
+                        <td>{{ item.average_rating }}</td>
+                        <td>{{ item.count_1 }}</td>
+                        <td>{{ item.count_2 }}</td>
+                        <td>{{ item.count_3 }}</td>
+                        <td>{{ item.count_4 }}</td>
+                        <td>{{ item.count_5 }}</td>
+                        <td>{{ item.total_responses }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9">No analysis available.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 🔹 TABLE 2: STUDENT-WISE FEEDBACK -->
+<div class="panel" style="margin-top: 20px;">
+    <div class="panel-header">Student Feedback Details</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Student Name</th>
+                    {% for question in questions %}
+                        <th>Q{{ forloop.counter }}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    <th></th>
+                    {% for question in questions %}
+                        <th>{{ question.question_text }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in student_rows %}
+                    <tr>
+                        <td>{{ row.student_name }}</td>
+                        {% for rating in row.ratings %}
+                            <td>{{ rating }}</td>
+                        {% endfor %}
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="{{ questions|length|add:1 }}">
+                            No student feedback available.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

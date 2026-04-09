@@ -1,0 +1,57 @@
+{% extends 'base/clerk_base.html' %}
+
+{% block title %}Clerk Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Clerk Dashboard</h1>
+
+<div class="dashboard-section">
+    <div class="section-strip">Actions</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'clerk_actions_complaints' %}">Complaints List</a>
+        <a class="action-btn" href="{% url 'clerk_actions_report' %}">Report</a>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">Complaint Section</div>
+    <div class="dashboard-plain-grid">
+    <a class="action-btn" href="{% url 'clerk_complaint_status_list' 'new' %}">
+        New Complaints ({{ new_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'clerk_complaint_status_list' 'in_progress' %}">
+        In Progress ({{ in_progress_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'clerk_complaint_status_list' 'completed' %}">
+        Completed ({{ completed_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'clerk_complaint_status_list' 'solved' %}">
+        Solved ({{ solved_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'clerk_complaint_status_list' 'unsolved' %}">
+        Unsolved ({{ unsolved_count }})
+    </a>
+</div>
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">Student and Academics Section</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'clerk_student_list' %}">Student Management</a>
+        <a class="action-btn" href="{% url 'clerk_academics_list' %}">Academics Management</a>
+    </div>
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">Import / Export Section</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'clerk_student_import' %}">Import Students</a>
+        <a class="action-btn" href="{% url 'clerk_student_export' %}">Export Students</a>
+        <a class="action-btn" href="{% url 'clerk_complaint_export' %}">Export Complaints</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+from django.urls import path
+from .views import (
+    department_add_view,
+    department_edit_view,
+    department_list_view,
+    department_delete_view,
+    student_add_view,
+    student_delete_view,
+    student_edit_view,
+    student_list_view,
+    student_import_view,
+    student_import_demo_file_view,
+    student_import_start_view,
+    student_import_status_view,
+    student_export_view,
+    student_bulk_delete_view,
+)
+
+urlpatterns = [
+    path("clerk/students/", student_list_view, name="clerk_student_list"),
+    path("clerk/students/add/", student_add_view, name="clerk_student_add"),
+    path("clerk/students/<int:pk>/edit/", student_edit_view, name="clerk_student_edit"),
+    path("clerk/students/<int:pk>/delete/", student_delete_view, name="clerk_student_delete"),
+    path("clerk/students/import/", student_import_view, name="clerk_student_import"),
+    path("clerk/students/export/", student_export_view, name="clerk_student_export"),
+    path("clerk/students/bulk-delete/", student_bulk_delete_view, name="clerk_student_bulk_delete"),
+
+    path("admin-panel/students/import/", student_import_view, name="admin_student_import"),
+    path("admin-panel/students/export/", student_export_view, name="admin_student_export"),
+    path("admin-panel/students/bulk-delete/", student_bulk_delete_view, name="admin_student_bulk_delete"),
+    path("admin-panel/students/", student_list_view, name="admin_student_list"),
+    path("admin-panel/students/add/", student_add_view, name="admin_student_add"),
+    path("admin-panel/students/<int:pk>/edit/", student_edit_view, name="admin_student_edit"),
+    path("admin-panel/students/<int:pk>/delete/", student_delete_view, name="admin_student_delete"),
+    path("admin-panel/departments/",department_list_view,name="department_list",),
+    path("admin-panel/departments/add/",department_add_view,name="department_add",),
+    path("admin-panel/departments/<int:pk>/edit/",department_edit_view,name="department_edit",),
+    path("admin-panel/departments/<int:pk>/delete/",department_delete_view,name="department_delete",),
+    path("import/demo/", student_import_demo_file_view, name="student_import_demo_file"),
+    path("import/start/", student_import_start_view, name="student_import_start"),
+    path("import/status/<int:job_id>/", student_import_status_view, name="student_import_status"),
+]

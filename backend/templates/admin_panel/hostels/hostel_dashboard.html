@@ -1,0 +1,41 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}{{ hostel_label }} Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">{{ hostel_label }} Dashboard</h1>
+
+<div class="dashboard-section">
+    <div class="section-strip">{{ hostel_label }} Complaint Section</div>
+    <div class="dashboard-plain-grid">
+    <a class="action-btn" href="{% url 'admin_complaint_status_list' 'new' %}">
+        New Complaints ({{ new_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'admin_complaint_status_list' 'in_progress' %}">
+        In Progress ({{ in_progress_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'admin_complaint_status_list' 'completed' %}">
+        Completed ({{ completed_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'admin_complaint_status_list' 'solved' %}">
+        Solved ({{ solved_count }})
+    </a>
+
+    <a class="action-btn" href="{% url 'admin_complaint_status_list' 'unsolved' %}">
+        Unsolved ({{ unsolved_count }})
+    </a>
+</div>
+</div>
+
+<div class="dashboard-section">
+    <div class="section-strip">{{ hostel_label }} Student Section</div>
+    <div class="dashboard-plain-grid">
+        <a class="action-btn" href="{% url 'admin_student_list' %}?hostel={{ hostel_value }}">Students</a>
+        <a class="action-btn" href="{% url 'admin_student_export' %}?hostel={{ hostel_value }}">Export Students</a>
+        <a class="action-btn" href="{% url 'admin_complaint_export' %}?hostel={{ hostel_value }}">Export Complaints</a>
+    </div>
+</div>
+{% endblock %}

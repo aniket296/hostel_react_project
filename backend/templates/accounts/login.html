@@ -1,0 +1,82 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - {{ system_title|default:"Hostel Management System" }}</title>
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body class="gov-login-body">
+
+    <div class="gov-login-wrapper">
+        <div class="gov-login-card">
+
+            <div class="gov-login-topbar">
+                <div class="gov-login-brand">
+                    <div class="gov-login-logo">
+                        {% if college_logo %}
+                            <img src="{{ college_logo.url }}" alt="{{ college_name }} Logo">
+                        {% else %}
+                            <img src="{% static 'images/gpn_logo.jpg' %}" alt="{{ college_name }} Logo">
+                        {% endif %}
+                    </div>
+                    <div class="gov-login-brand-text">
+                        <h1>Government Polytechnic, Nagpur</h1>
+                        <p>Hostel Management System</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="gov-login-header">
+                <h2> LOGIN</h2>
+                <p>Access your hostel portal account</p>
+            </div>
+
+            <div class="gov-login-body-inner">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="gov-alert gov-alert-error">
+                            {{ form.non_field_errors|striptags }}
+                        </div>
+                    {% endif %}
+
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="gov-alert {% if message.tags == 'error' %}gov-alert-error{% elif message.tags == 'success' %}gov-alert-success{% else %}gov-alert-info{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="gov-form-group">
+                        <label for="{{ form.identifier.id_for_label }}">USERNAME / PHONE NUMBER *</label>
+                        {{ form.identifier }}
+                        {% if form.identifier.errors %}
+                            <div class="gov-field-error">{{ form.identifier.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="gov-form-group">
+                        <label for="{{ form.password.id_for_label }}">PASSWORD *</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                            <div class="gov-field-error">{{ form.password.errors|striptags }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="gov-login-btn">LOGIN</button>
+                </form>
+            </div>
+
+            <div class="gov-login-footer">
+                <p>Authorized access only. Contact hostel administration for login support.</p>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

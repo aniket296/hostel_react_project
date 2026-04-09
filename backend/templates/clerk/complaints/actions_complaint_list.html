@@ -1,0 +1,141 @@
+{% extends 'base/clerk_base.html' %}
+
+{% block title %}Complaints List{% endblock %}
+
+{% block extra_css %}
+<style>
+.filters-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 14px;
+}
+.filters-row .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.filters-row input,
+.filters-row select {
+    min-width: 180px;
+    padding: 8px 10px;
+}
+@media print {
+    .no-print, .site-header, .sidebar, .footer, .messages-wrapper {
+        display: none !important;
+    }
+    .main-content {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Complaints List</h1>
+
+<div class="top-actions no-print">
+    <a href="{% url 'clerk_actions_complaints_export' %}?search={{ search|urlencode }}&status={{ selected_status|urlencode }}">Download</a>
+    <button type="button" onclick="window.print()">Print</button>
+</div>
+
+<div class="panel no-print">
+    <div class="panel-header">Filters</div>
+    <div class="panel-body">
+        <form method="get" class="filters-row">
+            <div class="field-group">
+                <label for="search">Search</label>
+                <input type="text" name="search" id="search" value="{{ search }}" placeholder="Complaint ID, description, room">
+            </div>
+            <div class="field-group">
+                <label for="status">Status</label>
+                <select name="status" id="status">
+                    <option value="">All</option>
+                    <option value="new" {% if selected_status == 'new' %}selected{% endif %}>New</option>
+                    <option value="in_progress" {% if selected_status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                    <option value="unsolved" {% if selected_status == 'unsolved' %}selected{% endif %}>Unsolved</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <button type="submit">Apply</button>
+            </div>
+            <div class="field-group">
+                <a href="{% url 'clerk_actions_complaints' %}">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Pending Complaint Records</div>
+    <div class="panel-body table-wrap">
+        <form method="post" action="{% url 'clerk_actions_bulk_mark_completed' %}">
+            {% csrf_token %}
+            <div class="top-actions no-print" style="margin-bottom: 12px;">
+                <button type="submit" class="action-btn-success">Mark Selected Completed</button>
+            </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="no-print"><input type="checkbox" id="select-all-complaints"></th>
+                        <th>Complaint ID</th>
+                        <th>Complaint Description</th>
+                        <th>Room Number</th>
+                        <th>Status</th>
+                        <th class="no-print">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr>
+                        <td class="no-print">
+                            {% if complaint.status == 'new' or complaint.status == 'in_progress' %}
+                            <input type="checkbox" name="complaint_ids" value="{{ complaint.id }}" class="complaint-checkbox">
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ complaint.id }}</td>
+                        <td>{{ complaint.description }}</td>
+                        <td>{{ complaint.room_number_snapshot }}</td>
+                        <td>{{ complaint.get_status_display }}</td>
+                        <td class="no-print">
+                            {% if complaint.status == 'new' or complaint.status == 'in_progress' %}
+                            <form method="post" action="{% url 'clerk_mark_completed' complaint.pk %}" class="inline-form">
+                                {% csrf_token %}
+                                <button class="inline-btn action-btn-success" type="submit">Completed</button>
+                            </form>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6">No new, in progress, or unsolved complaints found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const selectAll = document.getElementById('select-all-complaints');
+    const checkboxes = document.querySelectorAll('.complaint-checkbox');
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes.forEach(function (checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

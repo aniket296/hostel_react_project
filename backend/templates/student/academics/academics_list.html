@@ -1,0 +1,96 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}Academics{% endblock %}
+
+{% block content %}
+<div class="back-row">
+    <button type="button" class="action-btn" onclick="history.back()">← Back</button>
+</div>
+
+<h1 class="page-title">Academics</h1>
+
+<div class="panel">
+    <div class="panel-header">Academic File Filters</div>
+    <div class="panel-body">
+        <form method="get" class="filter-grid">
+            <div>
+                <label>Search Subject</label>
+                <input class="form-control" type="text" name="search" value="{{ search }}">
+            </div>
+
+            <div>
+                <label>Department</label>
+                <select class="form-control" name="department">
+                    <option value="">All</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Year</label>
+                <select class="form-control" name="year">
+                    <option value="">All Years</option>
+                    <option value="year_1" {% if selected_year == "year_1" %}selected{% endif %}>Year 1</option>
+                    <option value="year_2" {% if selected_year == "year_2" %}selected{% endif %}>Year 2</option>
+                    <option value="year_3" {% if selected_year == "year_3" %}selected{% endif %}>Year 3</option>
+                </select>
+            </div>
+
+            <div>
+                <label>File Type</label>
+                <select class="form-control" name="file_type">
+                    <option value="">All Types</option>
+                    <option value="curriculum" {% if selected_file_type == "curriculum" %}selected{% endif %}>Curriculum</option>
+                    <option value="notes" {% if selected_file_type == "notes" %}selected{% endif %}>Notes</option>
+                    <option value="pyq_pt" {% if selected_file_type == "pyq_pt" %}selected{% endif %}>PYQ PT</option>
+                    <option value="pyq_semester" {% if selected_file_type == "pyq_semester" %}selected{% endif %}>PYQ Semester</option>
+                </select>
+            </div>
+
+            <div>
+                <button class="action-btn" type="submit">Apply Filters</button>
+                
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="student-record-list">
+    {% for file in files %}
+    <div class="student-record-box">
+        <div class="student-record-head">
+            <div class="student-record-title">{{ file.subject.name }}</div>
+            <div class="record-meta"><strong>Course Code:</strong> {{ file.course_code }}</div>
+            <div class="student-record-badge">{{ file.get_file_type_display }}</div>
+        </div>
+
+        <div class="student-record-body">
+            <div><strong>Department:</strong> {{ file.department.name }}</div>
+            <div><strong>Year:</strong> {{ file.get_year_display }}</div>
+            <div><strong>Uploaded By:</strong> {{ file.uploaded_by_name_snapshot }}</div>
+            <div><strong>File Size:</strong> {{ file.get_file_size_display }}</div>
+        </div>
+
+        <div class="student-record-actions">
+            <a class="action-btn" href="{% url 'academic_download' file.pk %}">Download</a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-box">No academic files found.</div>
+    {% endfor %}
+</div>
+
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?search={{ search }}&department={{ selected_department }}&year={{ selected_year }}&file_type={{ selected_file_type }}&page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?search={{ search }}&department={{ selected_department }}&year={{ selected_year }}&file_type={{ selected_file_type }}&page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+{% endblock %}

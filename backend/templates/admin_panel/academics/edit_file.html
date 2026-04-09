@@ -1,0 +1,29 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Edit Academic File{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Edit Academic File</h1>
+
+<div class="form-block">
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-row">
+            <label>Subject</label>
+            {{ form.subject_name }}
+        </div>
+        <div>
+            <label>Course Code</label>
+            {{ form.course_code }}
+            {% if form.course_code.errors %}
+                <div class="form-error">{{ form.course_code.errors }}</div>
+            {% endif %}
+        </div>
+
+        {{ form.as_p }}
+
+        <button class="action-btn" type="submit">Update File</button>
+    </form>
+</div>
+{% endblock %}

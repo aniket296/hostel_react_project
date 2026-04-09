@@ -1,0 +1,18 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Add Clerk{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Add Clerk</h1>
+
+<div class="panel">
+    <div class="panel-header">Clerk Registration Form</div>
+    <div class="panel-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="action-btn" type="submit">Create Clerk</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

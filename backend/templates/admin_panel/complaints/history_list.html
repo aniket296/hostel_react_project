@@ -1,0 +1,104 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}All Complaint History{% endblock %}
+
+{% block content %}
+<h1 class="page-title">
+    {% if selected_hostel == "boys_hostel" %}
+        Boys Hostel Complaint History
+    {% elif selected_hostel == "girls_hostel" %}
+        Girls Hostel Complaint History
+    {% else %}
+        All Complaint History
+    {% endif %}
+</h1>
+
+<div class="top-actions">
+    <a href="{% url 'admin_complaint_export' %}?status={{ selected_status }}&search={{ search }}&hostel={{ selected_hostel }}">Export Complaints</a>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="filter-grid">
+        <div>
+            <label>Search</label>
+            <input class="form-control" type="text" name="search" value="{{ search }}" placeholder="Student, worker, room, description">
+        </div>
+
+        <div>
+            <label>Status</label>
+            <select class="form-control" name="status">
+                <option value="">All</option>
+                <option value="new" {% if selected_status == "new" %}selected{% endif %}>New</option>
+                <option value="in_progress" {% if selected_status == "in_progress" %}selected{% endif %}>In Progress</option>
+                <option value="completed" {% if selected_status == "completed" %}selected{% endif %}>Completed</option>
+                <option value="solved" {% if selected_status == "solved" %}selected{% endif %}>Solved</option>
+                <option value="unsolved" {% if selected_status == "unsolved" %}selected{% endif %}>Unsolved</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Hostel</label>
+            <select class="form-control" name="hostel">
+                <option value="">All</option>
+                <option value="boys_hostel" {% if selected_hostel == "boys_hostel" %}selected{% endif %}>Boys Hostel</option>
+                <option value="girls_hostel" {% if selected_hostel == "girls_hostel" %}selected{% endif %}>Girls Hostel</option>
+            </select>
+        </div>
+
+        <div>
+            <button class="action-btn" type="submit">Apply Filters</button>
+        </div>
+    </form>
+</div>
+
+<div class="page-card table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Description</th>
+                <th>Student</th>
+                <th>Phone</th>
+                <th>Hostel</th>
+                <th>Room</th>
+                <th>Worker</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Timeline</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for complaint in complaints %}
+            <tr>
+                <td>{{ complaint.id }}</td>
+                <td>{{ complaint.description }}</td>
+                <td>{{ complaint.student_name_snapshot }}</td>
+                <td>{{ complaint.student_phone_snapshot }}</td>
+                <td>{{ complaint.get_hostel_snapshot_display }}</td>
+                <td>{{ complaint.room_number_snapshot }}</td>
+                <td>{{ complaint.worker_name|default:"-" }}</td>
+                <td>{{ complaint.get_status_display }}</td>
+                <td>{{ complaint.created_at|date:"d M Y, h:i A" }}</td>
+                <td>
+                    <a href="{% url 'admin_complaint_detail' complaint.pk %}">Open Timeline</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10">No complaint history found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination">
+    {% if page_obj.has_previous %}
+        <a href="?search={{ search }}&status={{ selected_status }}&hostel={{ selected_hostel }}&page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+        <a href="?search={{ search }}&status={{ selected_status }}&hostel={{ selected_hostel }}&page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</div>
+{% endblock %}

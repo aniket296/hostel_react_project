@@ -1,0 +1,23 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}Complaints{% endblock %}
+
+{% block content %}
+<div class="student-page-wrap">
+    <div class="page-header">
+        <h1 class="page-title">Complaints</h1>
+    </div>
+
+    <div class="panel complaint-home-panel">
+        <div class="panel-header">Complaint Section</div>
+        <div class="panel-body">
+            <p class="complaint-home-text">Select an option below:</p>
+
+            <div class="top-actions complaint-home-actions">
+                <a href="{% url 'student_complaint_list' %}">Complaint History</a>
+                <a href="{% url 'student_complaint_create' %}">New Complaint</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

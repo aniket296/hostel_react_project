@@ -1,0 +1,70 @@
+{% extends 'base/clerk_base.html' %}
+
+{% block title %}Complaint Report{% endblock %}
+
+{% block extra_css %}
+<style>
+@media print {
+    .no-print, .site-header, .sidebar, .footer, .messages-wrapper {
+        display: none !important;
+    }
+    .main-content {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Complaint Report</h1>
+
+<div class="filter-bar no-print">
+    <form method="get" class="filter-grid">
+        <div>
+            <label>Select Date</label>
+            <input class="form-control" type="date" name="date" value="{{ selected_date }}">
+        </div>
+        <div>
+            <button class="action-btn" type="submit">Apply</button>
+        </div>
+        <div>
+            <a class="action-btn" href="{% url 'clerk_actions_report_export' %}{% if selected_date %}?date={{ selected_date }}{% endif %}">Download</a>
+            <button type="button" onclick="window.print()">Print</button>
+        </div>
+    </form>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Complaint History Report</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Complaint ID</th>
+                    <th>Complaint Description</th>
+                    <th>Room Number</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints %}
+                <tr>
+                    <td>{{ complaint.id }}</td>
+                    <td>{{ complaint.description }}</td>
+                    <td>{{ complaint.room_number_snapshot }}</td>
+                    <td>{{ complaint.get_status_display }}</td>
+                    <td>{{ complaint.created_at|date:"d-m-Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">No complaints found for the selected date.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

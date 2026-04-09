@@ -1,0 +1,138 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Import Students{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Import Students</h1>
+
+<div class="panel">
+    <div class="panel-header">Student Import Utility</div>
+    <div class="panel-body">
+        <div class="top-note">
+            Upload a CSV or XLSX file containing student records. Download the demo file first to see the correct format.
+        </div>
+
+        <div class="top-actions">
+            <a class="action-btn" href="{% url 'student_import_demo_file' %}">Download Demo File</a>
+        </div>
+
+        <form id="student-import-form" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <label for="student-import-file">Choose File</label>
+                <input type="file" id="student-import-file" name="file" class="form-control" accept=".csv,.xlsx" required>
+            </div>
+
+            <div class="top-actions">
+                <button type="submit" class="action-btn">Start Import</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="panel" id="import-progress-panel" style="display:none;">
+    <div class="panel-header">Import Progress</div>
+    <div class="panel-body">
+        <div style="border:1px solid #9aa5b1; background:#e9edf2; height:24px; width:100%; margin-bottom:14px;">
+            <div id="import-progress-bar" style="height:100%; width:0%; background:#0f4c8a;"></div>
+        </div>
+
+        <div class="student-record-list">
+            <div class="student-record-box"><div class="student-record-body"><strong>Status:</strong> <span id="job-status">Pending</span></div></div>
+            <div class="student-record-box"><div class="student-record-body"><strong>Total Rows:</strong> <span id="job-total">0</span></div></div>
+            <div class="student-record-box"><div class="student-record-body"><strong>Processed:</strong> <span id="job-processed">0</span></div></div>
+            <div class="student-record-box"><div class="student-record-body"><strong>Created:</strong> <span id="job-created">0</span></div></div>
+            <div class="student-record-box"><div class="student-record-body"><strong>Updated:</strong> <span id="job-updated">0</span></div></div>
+            <div class="student-record-box"><div class="student-record-body"><strong>Skipped:</strong> <span id="job-skipped">0</span></div></div>
+            <div class="student-record-box"><div class="student-record-body"><strong>Failed:</strong> <span id="job-failed">0</span></div></div>
+        </div>
+
+        <div id="job-error-box" class="empty-box" style="display:none; margin-top:12px;"></div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("student-import-form");
+    const progressPanel = document.getElementById("import-progress-panel");
+    const progressBar = document.getElementById("import-progress-bar");
+    const jobStatus = document.getElementById("job-status");
+    const jobTotal = document.getElementById("job-total");
+    const jobProcessed = document.getElementById("job-processed");
+    const jobCreated = document.getElementById("job-created");
+    const jobUpdated = document.getElementById("job-updated");
+    const jobSkipped = document.getElementById("job-skipped");
+    const jobFailed = document.getElementById("job-failed");
+    const jobErrorBox = document.getElementById("job-error-box");
+
+    let pollTimer = null;
+
+    function updateProgress(data) {
+        progressPanel.style.display = "block";
+        progressBar.style.width = `${data.percent}%`;
+        jobStatus.textContent = data.status;
+        jobTotal.textContent = data.total_rows;
+        jobProcessed.textContent = data.processed_rows;
+        jobCreated.textContent = data.created_count;
+        jobUpdated.textContent = data.updated_count;
+        jobSkipped.textContent = data.skipped_count;
+        jobFailed.textContent = data.failed_count;
+
+        if (data.error_message) {
+            jobErrorBox.style.display = "block";
+            jobErrorBox.textContent = data.error_message;
+        } else {
+            jobErrorBox.style.display = "none";
+        }
+
+        if (data.status === "completed" || data.status === "failed") {
+            clearInterval(pollTimer);
+        }
+    }
+
+    function pollJob(jobId) {
+        pollTimer = setInterval(function () {
+            fetch(`{% url 'student_import_status' 0 %}`.replace('/0/', `/${jobId}/`))
+                .then(response => response.json())
+                .then(data => updateProgress(data));
+        }, 1200);
+    }
+
+    form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+
+        fetch("{% url 'student_import_start' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                progressPanel.style.display = "block";
+                progressBar.style.width = "0%";
+                jobStatus.textContent = "pending";
+                jobTotal.textContent = "0";
+                jobProcessed.textContent = "0";
+                jobCreated.textContent = "0";
+                jobUpdated.textContent = "0";
+                jobSkipped.textContent = "0";
+                jobFailed.textContent = "0";
+                jobErrorBox.style.display = "none";
+                pollJob(data.job_id);
+            } else {
+                alert(data.error || "Import failed to start.");
+            }
+        })
+        .catch(() => {
+            alert("Could not start import.");
+        });
+    });
+});
+</script>
+{% endblock %}

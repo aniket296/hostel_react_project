@@ -1,0 +1,23 @@
+{% extends 'base/student_base.html' %}
+
+{% block title %}Academics{% endblock %}
+
+{% block content %}
+<div class="student-page-wrap">
+    <div class="page-header">
+        <h1 class="page-title">Academics</h1>
+    </div>
+
+    <div class="panel academics-home-panel">
+        <div class="panel-header">Academics Section</div>
+        <div class="panel-body">
+            <p class="academics-home-text">Select an option below:</p>
+
+            <div class="top-actions academics-home-actions">
+                <a href="{% url 'student_academics_list' %}">Download Academics</a>
+                <a href="{% url 'student_academic_upload' %}">Upload Academics</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

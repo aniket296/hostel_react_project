@@ -1,0 +1,18 @@
+{% extends 'base/clerk_base.html' %}
+
+{% block title %}Edit Student{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Edit Student</h1>
+
+<div class="panel">
+    <div class="panel-header">Student Update Form</div>
+    <div class="panel-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="action-btn" type="submit">Update Student</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Edit Department{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Edit Department</h1>
+
+<div class="panel">
+    <div class="panel-header">Department Update Form</div>
+    <div class="panel-body">
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button class="action-btn" type="submit">Update Department</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

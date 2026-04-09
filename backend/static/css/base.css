@@ -1,0 +1,50 @@
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f6f8;
+    color: #222;
+}
+
+a {
+    color: #194a7b;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+button {
+    cursor: pointer;
+}
+
+.message-wrapper {
+    width: 100%;
+}
+
+.alert {
+    padding: 14px 18px;
+    margin: 0;
+    font-size: 14px;
+    border-bottom: 1px solid #ddd;
+}
+
+.alert-success {
+    background: #e7f6ea;
+    color: #1f6b2a;
+}
+
+.alert-error {
+    background: #fdeaea;
+    color: #a12622;
+}
+
+.alert-warning {
+    background: #fff7e1;
+    color: #8a6300;
+}
+
+.alert-info {
+    background: #eaf3fd;
+    color: #124a83;
+}

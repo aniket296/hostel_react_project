@@ -1,0 +1,45 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Analyse Feedback{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Analyse Feedback</h1>
+
+<div class="panel">
+    <div class="panel-header">All Feedback Forms</div>
+    <div class="panel-body table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Form Name</th>
+                    <th>Hostel</th>
+                    <th>Created Date</th>
+                    <th>Status</th>
+                    <th>Total Responses</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for feedback_form in feedback_forms %}
+                    <tr>
+                        <td>{{ feedback_form.name }}</td>
+                        <td>{{ feedback_form.get_hostel_display }}</td>
+                        <td>{{ feedback_form.created_at }}</td>
+                        <td>{{ feedback_form.get_status_display }}</td>
+                        <td>{{ feedback_form.submissions.count }}</td>
+                        <td>
+                            <a class="action-btn" href="{% url 'admin_feedback_analysis_view' feedback_form.pk %}">
+                                View Analysis
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6">No feedback forms available.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

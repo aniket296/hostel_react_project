@@ -1,0 +1,63 @@
+{% extends 'base/admin_base.html' %}
+
+{% block title %}Complaint Detail{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Complaint Detail</h1>
+
+<div class="panel">
+    <div class="panel-header">Complaint Information</div>
+    <div class="panel-body">
+        <p><strong>Description:</strong> {{ complaint.description }}</p>
+        <p><strong>Student:</strong> {{ complaint.student_name_snapshot }}</p>
+        <p><strong>Phone:</strong> {{ complaint.student_phone_snapshot }}</p>
+        <p><strong>Department:</strong> {{ complaint.department_name_snapshot }}</p>
+        <p><strong>Year:</strong> {{ complaint.get_year_snapshot_display }}</p>
+        <p><strong>Hostel:</strong> {{ complaint.get_hostel_snapshot_display }}</p>
+        <p><strong>Room Number:</strong> {{ complaint.room_number_snapshot }}</p>
+        <p><strong>Worker:</strong> {{ complaint.worker_name|default:"Not assigned" }}</p>
+        <p><strong>Current Status:</strong> {{ complaint.get_status_display }}</p>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Actions</div>
+    <div class="panel-body">
+        {% if complaint.status == 'new' or complaint.status == 'unsolved' %}
+        <form method="post" action="{% url 'admin_assign_worker' complaint.pk %}">
+            {% csrf_token %}
+            {{ assign_form.as_p }}
+            <button class="action-btn" type="submit">
+                {% if complaint.status == 'unsolved' %}
+                    Reopen + Assign Worker
+                {% else %}
+                    Assign Worker
+                {% endif %}
+            </button>
+        </form>
+        {% endif %}
+
+        {% if complaint.status == 'in_progress' %}
+        <form method="post" action="{% url 'admin_mark_completed' complaint.pk %}">
+            {% csrf_token %}
+            <button class="action-btn" type="submit">Mark Completed</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel">
+    <div class="panel-header">Complaint History / Timeline</div>
+    <div class="panel-body">
+        {% for item in complaint.status_history.all %}
+        <div style="border-left:4px solid #0f4c8a; padding:10px 14px; background:#f7f7f7; margin-bottom:12px; border:1px solid #c8cfd6;">
+            <p><strong>Status:</strong> {{ item.get_status_display }}</p>
+            <p><strong>Changed By:</strong> {{ item.changed_by_role_snapshot|default:"-" }}</p>
+            <p><strong>Time:</strong> {{ item.timestamp }}</p>
+        </div>
+        {% empty %}
+        <div class="empty-box">No complaint history available.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
