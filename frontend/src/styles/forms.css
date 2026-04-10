@@ -1,0 +1,140 @@
+.form-block {
+    border: 1px solid #7c8793;
+    background: #f3f3f3;
+    padding: 18px;
+}
+
+.form-row {
+    margin-bottom: 16px;
+}
+
+.form-row label,
+.form-block label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #24313f;
+}
+
+.form-control,
+.form-block input[type="text"],
+.form-block input[type="password"],
+.form-block input[type="file"],
+.form-block input[type="number"],
+.form-block select,
+.form-block textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #9aa5b1;
+    background: white;
+    font-size: 15px;
+    min-height: 44px;
+}
+
+.form-control:focus,
+.form-block input:focus,
+.form-block select:focus,
+.form-block textarea:focus {
+    outline: none;
+    border-color: #0f4c8a;
+}
+
+.readonly-box {
+    border: 1px solid #9aa5b1;
+    background: #fafafa;
+    padding: 11px 12px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.form-help {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #5b6470;
+}
+
+.errorlist,
+.form-errors {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    color: #c32020;
+    font-size: 13px;
+}
+.form-block,
+.panel-body {
+    position: relative;
+}
+
+.form-row {
+    margin-bottom: 16px;
+}
+
+.form-row label,
+.panel-body label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 700;
+    font-size: 14px;
+    color: #24313f;
+}
+
+.form-control,
+input[type="text"],
+input[type="password"],
+input[type="file"],
+input[type="number"],
+select,
+textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #9aa5b1;
+    background: white;
+    font-size: 15px;
+    min-height: 44px;
+}
+
+textarea.form-control,
+textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-control:focus,
+input:focus,
+select:focus,
+textarea:focus {
+    outline: none;
+    border-color: #0f4c8a;
+}
+
+.readonly-box {
+    border: 1px solid #9aa5b1;
+    background: #fafafa;
+    padding: 11px 12px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+}
+
+.form-help {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #5b6470;
+}
+
+.errorlist,
+.form-errors {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    color: #c32020;
+    font-size: 13px;
+}
+.progress-label-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+}

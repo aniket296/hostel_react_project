@@ -1,0 +1,433 @@
+.student-shell {
+    padding: 16px;
+}
+
+.student-dashboard-grid {
+    display: grid;
+    gap: 14px;
+}
+
+.student-card-link {
+    display: block;
+    background: white;
+    border: 1px solid #d6dde6;
+    text-decoration: none;
+    color: inherit;
+    padding: 18px;
+}
+
+.student-card-link:hover {
+    text-decoration: none;
+    border-color: #194a7b;
+}
+
+.student-card-link h3 {
+    margin: 0 0 8px;
+    color: #194a7b;
+    font-size: 20px;
+}
+
+.student-card-link p {
+    margin: 0;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.student-complaint-card,
+.student-file-card {
+    background: white;
+    border: 1px solid #d6dde6;
+    padding: 14px;
+    margin-bottom: 14px;
+}
+
+.student-card-actions {
+    margin-top: 12px;
+}
+
+.student-card-actions a,
+.student-card-actions button {
+    display: inline-block;
+    margin-right: 8px;
+    margin-top: 8px;
+    background: #194a7b;
+    color: white;
+    border: none;
+    text-decoration: none;
+    padding: 9px 12px;
+    font-size: 13px;
+}
+
+.student-card-actions a:hover,
+.student-card-actions button:hover {
+    background: #0f2f4f;
+    text-decoration: none;
+}
+
+.student-card-actions .danger-lite {
+    background: #b42318;
+}
+
+.student-filter-box {
+    background: white;
+    border: 1px solid #d6dde6;
+    padding: 14px;
+    margin-bottom: 16px;
+}
+
+@media (min-width: 768px) {
+    .student-shell {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 25px;
+    }
+
+    .student-dashboard-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+.student-academic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.student-academic-item {
+    border: 1px solid #9aa5b1;
+    background: #f7f7f7;
+}
+
+.student-academic-title {
+    background: #0f4c8a;
+    color: #ffffff;
+    padding: 9px 12px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.student-academic-meta {
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    line-height: 1.4;
+}
+
+.student-academic-actions {
+    padding: 0 12px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.student-academic-actions .action-btn {
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .student-academic-title {
+        font-size: 16px;
+        padding: 9px 10px;
+    }
+
+    .student-academic-meta {
+        padding: 10px;
+        font-size: 14px;
+        gap: 6px;
+    }
+
+    .student-academic-actions {
+        padding: 0 10px 10px;
+        flex-direction: column;
+    }
+
+    .student-academic-actions .action-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+@media (max-width: 768px) {
+    .filter-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .filter-grid .action-btn {
+        width: 100%;
+        text-align: center;
+        margin-right: 0;
+    }
+
+    .page-title {
+        font-size: 22px;
+    }
+
+    .panel-header {
+        font-size: 18px;
+    }
+}
+@media (max-width: 768px) {
+    iframe {
+        height: 380px !important;
+    }
+}
+.student-complaint-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.student-complaint-item {
+    border: 1px solid #9aa5b1;
+    background: #f7f7f7;
+}
+
+.student-complaint-title {
+    background: #0f4c8a;
+    color: #ffffff;
+    padding: 9px 12px;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.student-complaint-meta {
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    line-height: 1.4;
+}
+
+.student-complaint-actions {
+    padding: 0 12px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.student-complaint-actions .action-btn {
+    margin: 0;
+}
+
+.timeline-entry {
+    border-left: 4px solid #0f4c8a;
+    padding: 10px 12px;
+    background: #f7f7f7;
+    margin-bottom: 10px;
+    border: 1px solid #c8cfd6;
+}
+
+@media (max-width: 768px) {
+    .student-complaint-title {
+        font-size: 16px;
+        padding: 9px 10px;
+    }
+
+    .student-complaint-meta {
+        padding: 10px;
+        font-size: 14px;
+        gap: 6px;
+    }
+
+    .student-complaint-actions {
+        padding: 0 10px 10px;
+        flex-direction: column;
+    }
+
+    .student-complaint-actions .action-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+.student-record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.student-record-box {
+    border: 1px solid #9aa5b1;
+    background: #f7f7f7;
+}
+
+.student-record-head {
+    background: #eef3f8;
+    border-bottom: 1px solid #c8cfd6;
+    padding: 9px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.student-record-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f4c8a;
+}
+
+.student-record-badge {
+    font-size: 12px;
+    font-weight: 700;
+    color: #083764;
+    background: #d9e6f5;
+    border: 1px solid #a9bfdc;
+    padding: 4px 8px;
+}
+
+.student-record-body {
+    padding: 10px 12px;
+    display: grid;
+    gap: 6px;
+    font-size: 14px;
+    color: #1f2937;
+    line-height: 1.4;
+}
+
+.student-record-actions {
+    padding: 0 12px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.student-record-actions .action-btn {
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .student-record-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .student-record-title {
+        font-size: 16px;
+    }
+
+    .student-record-body {
+        font-size: 14px;
+    }
+
+    .student-record-actions {
+        flex-direction: column;
+    }
+
+    .student-record-actions .action-btn {
+        width: 100%;
+        text-align: center;
+    }
+}
+.student-page-wrap {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.complaint-home-panel {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.complaint-home-text {
+    margin-bottom: 16px;
+}
+
+.complaint-home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.complaint-home-actions a {
+    min-width: 160px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .student-page-wrap {
+        padding-top: 12px;
+    }
+
+    .complaint-home-panel {
+        margin-top: 8px;
+    }
+
+    .complaint-home-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .complaint-home-actions a {
+        width: 100%;
+        display: block;
+        box-sizing: border-box;
+    }
+}
+.academics-home-panel {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.academics-home-text {
+    margin-bottom: 16px;
+}
+
+.academics-home-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.academics-home-actions a {
+    min-width: 180px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .academics-home-panel {
+        margin-top: 8px;
+    }
+
+    .academics-home-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .academics-home-actions a {
+        width: 100%;
+        display: block;
+        box-sizing: border-box;
+    }
+}
+.feedback-student-panel {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.feedback-question-list {
+    width: 100%;
+}
+
+.feedback-question-item label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.feedback-question-item select {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    .feedback-student-panel {
+        margin-top: 8px;
+    }
+
+    .feedback-question-item {
+        margin-bottom: 14px;
+    }
+}

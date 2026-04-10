@@ -1,4 +1,0 @@
-import { useEffect, useState } from 'react'
-import client from '../api/client'
-import { useAuth } from '../context/AuthContext'
-export default function DashboardPage(){ const { user } = useAuth(); const [data,setData]=useState(null); useEffect(()=>{ client.get('/dashboard/summary/').then((res)=>setData(res.data)); },[]); if(!data) return <div className='card'>Loading dashboard...</div>; return <div><h1 className='page-title'>Dashboard</h1><div className='stats-grid'>{Object.entries(data).filter(([k]) => !['role','assigned_hostel','student_name','hostel'].includes(k)).map(([k,v]) => <div key={k} className='card stat-card'><div className='stat-label'>{k.replaceAll('_',' ')}</div><div className='stat-value'>{String(v)}</div></div>)}</div><div className='card'>Logged in as <strong>{user?.role}</strong></div></div>}

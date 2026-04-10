@@ -1,2 +1,0 @@
-import { useAuth } from '../context/AuthContext'
-export default function Navbar() { const { user, logout } = useAuth(); return <header className='topbar'><div><div className='brand-title'>Hostel Management System</div><div className='brand-subtitle'>React frontend conversion</div></div><div className='topbar-actions'>{user && <span className='pill'>{user.display_name}</span>}{user && <button className='btn danger' onClick={logout}>Logout</button>}</div></header> }
