@@ -152,11 +152,32 @@ class StudentListCreateApiView(generics.ListCreateAPIView):
         serializer = StudentCreateUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        phone = data["phone_number"]
-        if User.objects.filter(phone_number=phone).exists():
+        phone = (data["phone_number"] or "").strip()
+        password = (data.get("password") or phone).strip()
+
+        if not phone:
+            return Response({"phone_number": ["Phone number is required."]}, status=400)
+
+        if User.objects.filter(Q(phone_number=phone) | Q(username=phone)).exists():
             return Response({"phone_number": ["Phone number already exists."]}, status=400)
-        user = User.objects.create_user(username=None, phone_number=phone, password=data.get("password") or phone, role=User.ROLE_STUDENT)
-        student = Student.objects.create(user=user, full_name=data["full_name"], phone_number=phone, department=data.get("department"), year=data["year"], gender=data["gender"], room_number=data["room_number"])
+
+        # Current auth setup still requires username to be set, so use the phone
+        # number as the username for student accounts.
+        user = User.objects.create_user(
+            username=phone,
+            phone_number=phone,
+            password=password,
+            role=User.ROLE_STUDENT,
+        )
+        student = Student.objects.create(
+            user=user,
+            full_name=data["full_name"],
+            phone_number=phone,
+            department=data.get("department"),
+            year=data["year"],
+            gender=data["gender"],
+            room_number=data["room_number"],
+        )
         return Response(StudentSerializer(student).data, status=201)
 
 
