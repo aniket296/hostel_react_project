@@ -12,13 +12,34 @@ User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+    hostel = serializers.SerializerMethodField()
+    room_number = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "username", "phone_number", "role", "is_locked", "display_name"]
+        fields = [
+            "id", "username", "phone_number", "role", "is_locked",
+            "display_name", "full_name", "hostel", "room_number",
+        ]
 
     def get_display_name(self, obj):
+        student = getattr(obj, "student_profile", None)
+        if student and student.full_name:
+            return student.full_name
         return obj.get_display_name()
+
+    def get_full_name(self, obj):
+        student = getattr(obj, "student_profile", None)
+        return student.full_name if student else obj.get_display_name()
+
+    def get_hostel(self, obj):
+        student = getattr(obj, "student_profile", None)
+        return getattr(student, "hostel", None)
+
+    def get_room_number(self, obj):
+        student = getattr(obj, "student_profile", None)
+        return getattr(student, "room_number", "")
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -83,7 +104,7 @@ class ComplaintSerializer(serializers.ModelSerializer):
 
 class ComplaintCreateSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=100)
-    room_number = serializers.CharField(max_length=20)
+    room_number = serializers.CharField(max_length=20, required=False, allow_blank=True)
 
 
 class SubjectSerializer(serializers.ModelSerializer):
@@ -95,11 +116,17 @@ class SubjectSerializer(serializers.ModelSerializer):
 class AcademicFileSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source="department.name", read_only=True)
     subject_name = serializers.CharField(source="subject.name", read_only=True)
+    uploaded_by_name = serializers.CharField(source="uploaded_by_name_snapshot", read_only=True)
     download_url = serializers.SerializerMethodField()
 
     class Meta:
         model = AcademicFile
-        fields = ["id", "department", "department_name", "year", "subject", "subject_name", "course_code", "file_type", "original_file_name", "stored_file_name", "file_extension", "file_size", "file_hash", "uploaded_by_name_snapshot", "created_at", "updated_at", "download_url"]
+        fields = [
+            "id", "department", "department_name", "year", "subject", "subject_name",
+            "course_code", "file_type", "original_file_name", "stored_file_name",
+            "file_extension", "file_size", "file_hash", "uploaded_by_name_snapshot",
+            "uploaded_by_name", "created_at", "updated_at", "download_url"
+        ]
 
     def get_download_url(self, obj):
         request = self.context.get("request")
@@ -109,9 +136,34 @@ class AcademicFileSerializer(serializers.ModelSerializer):
 
 
 class AcademicFileCreateSerializer(serializers.ModelSerializer):
+    subject_name = serializers.CharField(write_only=True, required=False, allow_blank=False)
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all(), required=False, allow_null=True)
+    file_type = serializers.ChoiceField(choices=[
+        (AcademicFile.TYPE_PYQ_PT, "PYQ PT"),
+        (AcademicFile.TYPE_PYQ_SEMESTER, "PYQ Semester"),
+        (AcademicFile.TYPE_NOTES, "Notes"),
+        (AcademicFile.TYPE_QUESTION_BANK, "Question Bank"),
+        (AcademicFile.TYPE_CURRICULUM, "Curriculum"),
+    ])
+
     class Meta:
         model = AcademicFile
-        fields = ["department", "year", "subject", "course_code", "file_type", "file"]
+        fields = ["department", "year", "subject", "subject_name", "course_code", "file_type", "file"]
+
+    def validate(self, attrs):
+        subject = attrs.get("subject")
+        subject_name = (attrs.get("subject_name") or "").strip()
+        if not subject and not subject_name:
+            raise serializers.ValidationError({"subject_name": "Subject name is required."})
+        return attrs
+
+    def create(self, validated_data):
+        subject = validated_data.pop("subject", None)
+        subject_name = (validated_data.pop("subject_name", "") or "").strip()
+        if subject is None:
+            subject, _ = Subject.objects.get_or_create(name=subject_name)
+        validated_data["subject"] = subject
+        return super().create(validated_data)
 
 
 class FeedbackQuestionSerializer(serializers.ModelSerializer):

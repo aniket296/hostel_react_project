@@ -46,12 +46,14 @@ class AcademicFile(models.Model):
     TYPE_NOTES = "notes"
     TYPE_PYQ_PT = "pyq_pt"
     TYPE_PYQ_SEMESTER = "pyq_semester"
+    TYPE_QUESTION_BANK = "question_bank"
 
     FILE_TYPE_CHOICES = [
-        (TYPE_CURRICULUM, "Curriculum"),
+        (TYPE_PYQ_PT, "PYQ PT"),
+        (TYPE_PYQ_SEMESTER, "PYQ Semester"),
         (TYPE_NOTES, "Notes"),
-        (TYPE_PYQ_PT, "PYQ (PT Exam)"),
-        (TYPE_PYQ_SEMESTER, "PYQ (Semester Exam)"),
+        (TYPE_QUESTION_BANK, "Question Bank"),
+        (TYPE_CURRICULUM, "Curriculum"),
     ]
 
     department = models.ForeignKey(
