@@ -2,10 +2,8 @@ import hashlib
 import os
 import uuid
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models.fields.files import FieldFile
 
 from students.models import Department, Student
 
@@ -68,6 +66,7 @@ class AcademicFile(models.Model):
         related_name="academic_files",
     )
     course_code = models.CharField(max_length=50, blank=True, default="")
+    description = models.TextField(blank=True, default="")
     file_type = models.CharField(max_length=20, choices=FILE_TYPE_CHOICES)
     file = models.FileField(upload_to=academic_file_upload_path)
 

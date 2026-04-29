@@ -49,7 +49,7 @@ export default function StudentAcademicsListPage() {
         <div className='panel-body'>
           <form onSubmit={applySearch} className='filter-grid'>
             <div>
-              <label>Search Subject / Course Code</label>
+              <label>Search Subject / Course Code / Description</label>
               <input
                 className='form-control'
                 value={search}
@@ -83,6 +83,7 @@ export default function StudentAcademicsListPage() {
                 <div className='student-record-body'>
                   <div><strong>Subject:</strong> {file.subject_name || '-'}</div>
                   <div><strong>Course Code:</strong> {file.course_code || '-'}</div>
+                  <div><strong>Description:</strong> {file.description || '-'}</div>
                   <div><strong>Department:</strong> {file.department_name || '-'}</div>
                   <div><strong>Year:</strong> {yearLabel(file.year)}</div>
                   <div><strong>Uploaded By:</strong> {file.uploaded_by_name || file.uploaded_by_name_snapshot || '-'}</div>

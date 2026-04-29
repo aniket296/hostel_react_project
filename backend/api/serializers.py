@@ -123,7 +123,7 @@ class AcademicFileSerializer(serializers.ModelSerializer):
         model = AcademicFile
         fields = [
             "id", "department", "department_name", "year", "subject", "subject_name",
-            "course_code", "file_type", "original_file_name", "stored_file_name",
+            "course_code", "description", "file_type", "original_file_name", "stored_file_name",
             "file_extension", "file_size", "file_hash", "uploaded_by_name_snapshot",
             "uploaded_by_name", "created_at", "updated_at", "download_url"
         ]
@@ -148,7 +148,7 @@ class AcademicFileCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AcademicFile
-        fields = ["department", "year", "subject", "subject_name", "course_code", "file_type", "file"]
+        fields = ["department", "year", "subject", "subject_name", "course_code", "description", "file_type", "file"]
 
     def validate(self, attrs):
         subject = attrs.get("subject")
@@ -164,7 +164,6 @@ class AcademicFileCreateSerializer(serializers.ModelSerializer):
             subject, _ = Subject.objects.get_or_create(name=subject_name)
         validated_data["subject"] = subject
         return super().create(validated_data)
-
 
 class FeedbackQuestionSerializer(serializers.ModelSerializer):
     class Meta:

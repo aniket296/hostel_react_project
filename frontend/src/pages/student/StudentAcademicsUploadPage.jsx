@@ -20,6 +20,7 @@ export default function StudentAcademicsUploadPage() {
     year: 'year_1',
     file_type: 'notes',
     course_code: '',
+    description: '',
     file: null,
   })
   const [error, setError] = useState('')
@@ -35,6 +36,7 @@ export default function StudentAcademicsUploadPage() {
     const fd = new FormData()
     fd.append('subject_name', form.subject_name.trim())
     fd.append('course_code', form.course_code.trim())
+    fd.append('description', form.description.trim())
     fd.append('department', form.department)
     fd.append('year', form.year)
     fd.append('file_type', form.file_type)
@@ -68,8 +70,8 @@ export default function StudentAcademicsUploadPage() {
         <div className='panel-header'>Academic File Upload</div>
         <div className='panel-body'>
           <div className='top-note'>
-            Upload notes, curriculum, previous year question papers, or question banks. Make sure the
-            subject name, department, year, file type, and course code are correct before submitting.
+            Upload notes, curriculum, previous year question papers, or question banks. Add a short
+            description like unit, lesson, or topic before submitting.
           </div>
 
           <form onSubmit={submit}>
@@ -91,6 +93,17 @@ export default function StudentAcademicsUploadPage() {
                 className='form-control'
                 value={form.course_code}
                 onChange={(e) => setField('course_code', e.target.value)}
+              />
+            </div>
+
+            <div className='form-row'>
+              <label>Description</label>
+              <textarea
+                className='form-control'
+                rows='3'
+                value={form.description}
+                onChange={(e) => setField('description', e.target.value)}
+                placeholder='Example: Unit 2 notes, Lesson 4 PYQ, Chapter 3 important questions'
               />
             </div>
 
