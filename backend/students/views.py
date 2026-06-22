@@ -1,4 +1,5 @@
 import csv
+import logging
 import threading
 
 from django.contrib import messages
@@ -20,6 +21,8 @@ from .import_export import (
 )
 from .models import Department, Student, StudentImportJob
 from .utils import get_unassigned_department
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -415,6 +418,7 @@ def run_student_import_job(job_id, rows, current_user_id):
                 failed_count += 1
                 existing_error = job.error_message or ""
                 row_error = f"Row {row_index}: {str(e)}"
+                logger.exception("Student import row failed at row %s", row_index)
                 if len(existing_error) < 4000:
                     job.error_message = (existing_error + "\n" + row_error).strip()
 
@@ -439,6 +443,7 @@ def run_student_import_job(job_id, rows, current_user_id):
         job.save(update_fields=["status", "updated_at"])
 
     except Exception as e:
+        logger.exception("Student import job failed for job id %s", job.id)
         job.status = StudentImportJob.STATUS_FAILED
         job.error_message = str(e)
         job.save(update_fields=["status", "error_message", "updated_at"])

@@ -54,40 +54,50 @@ function csvCell(value) {
 }
 
 export function parseCsvText(text) {
-  const lines = text.split(/\r?\n/).filter((line) => line.trim())
-  if (!lines.length) return []
-  const headers = splitCsvLine(lines[0]).map((h) => h.trim())
-  return lines.slice(1).map((line) => {
-    const values = splitCsvLine(line)
+  const rows = []
+  let current = []
+  let field = ''
+  let inQuotes = false
+
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]
+    const next = text[i + 1]
+
+    if (ch === '"') {
+      if (inQuotes && next === '"') {
+        field += '"'
+        i += 1
+      } else {
+        inQuotes = !inQuotes
+      }
+    } else if (ch === ',' && !inQuotes) {
+      current.push(field)
+      field = ''
+    } else if (ch === '\r') {
+      continue
+    } else if (ch === '\n' && !inQuotes) {
+      current.push(field)
+      rows.push(current)
+      current = []
+      field = ''
+    } else {
+      field += ch
+    }
+  }
+
+  if (field !== '' || current.length > 0) {
+    current.push(field)
+    rows.push(current)
+  }
+
+  if (!rows.length) return []
+
+  const headers = rows[0].map((h) => h.trim())
+  return rows.slice(1).map((values) => {
     const row = {}
     headers.forEach((header, index) => {
       row[header] = values[index] ?? ''
     })
     return row
   })
-}
-
-function splitCsvLine(line) {
-  const out = []
-  let cur = ''
-  let inQuotes = false
-  for (let i = 0; i < line.length; i += 1) {
-    const ch = line[i]
-    const next = line[i + 1]
-    if (ch === '"') {
-      if (inQuotes && next === '"') {
-        cur += '"'
-        i += 1
-      } else {
-        inQuotes = !inQuotes
-      }
-    } else if (ch === ',' && !inQuotes) {
-      out.push(cur)
-      cur = ''
-    } else {
-      cur += ch
-    }
-  }
-  out.push(cur)
-  return out
 }

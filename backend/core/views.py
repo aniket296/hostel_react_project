@@ -182,7 +182,7 @@ def backup_create_view(request):
         if temp_path and os.path.exists(temp_path):
             try:
                 os.remove(temp_path)
-            except Exception:
+            except OSError:
                 pass
         messages.error(request, f"Backup failed: {str(e)}")
 

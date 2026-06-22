@@ -56,9 +56,12 @@ def mark_unsolved(complaint, changed_by_user):
     create_status_history(complaint, Complaint.STATUS_UNSOLVED, changed_by_user)
 
 
-def reopen_unsolved(complaint, new_worker_name, changed_by_user):
-    complaint.worker_name = new_worker_name
+def reopen_unsolved(complaint, changed_by_user, new_worker_name=None):
     complaint.status = Complaint.STATUS_IN_PROGRESS
     complaint.unsolved_at = None
-    complaint.save(update_fields=["worker_name", "status", "unsolved_at", "updated_at"])
+    if new_worker_name:
+        complaint.worker_name = new_worker_name
+        complaint.save(update_fields=["worker_name", "status", "unsolved_at", "updated_at"])
+    else:
+        complaint.save(update_fields=["status", "unsolved_at", "updated_at"])
     create_status_history(complaint, Complaint.STATUS_IN_PROGRESS, changed_by_user)

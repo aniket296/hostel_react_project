@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.urls import resolve
+from django.urls import Resolver404, resolve
 from core.models import SystemSettings
 
 
@@ -19,7 +19,7 @@ class MaintenanceModeMiddleware:
             current_url_name = ""
             try:
                 current_url_name = resolve(request.path_info).url_name or ""
-            except Exception:
+            except Resolver404:
                 current_url_name = ""
 
             user = getattr(request, "user", None)

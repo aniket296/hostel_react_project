@@ -27,7 +27,7 @@ class UsernameOrPhoneBackend(ModelBackend):
             except User.DoesNotExist:
                 return None
 
-        if user.is_locked and user.role != "admin":
+        if user.is_locked and user.role != User.ROLE_ADMIN:
             return None
 
         if user.check_password(password):

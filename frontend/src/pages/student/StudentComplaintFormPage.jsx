@@ -27,7 +27,9 @@ export default function StudentComplaintFormPage() {
         localStorage.setItem('user', JSON.stringify(res.data))
         setUser(res.data)
       })
-      .catch(() => {})
+      .catch(() => {
+        setError('Unable to refresh your profile. Please log in again.')
+      })
     return () => {
       active = false
     }
