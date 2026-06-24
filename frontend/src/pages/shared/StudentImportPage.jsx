@@ -19,7 +19,10 @@ export default function StudentImportPage({ role }) {
       const rows = parseCsvText(text)
       let success = 0
       let fail = 0
-      for (const row of rows) {
+      const rowErrors = []
+
+      for (let rowIndex = 0; rowIndex < rows.length; rowIndex += 1) {
+        const row = rows[rowIndex]
         try {
           await client.post('/students/', {
             full_name: row.full_name || row.name || '',
@@ -31,12 +34,24 @@ export default function StudentImportPage({ role }) {
             password: row.password || '',
           })
           success += 1
-        } catch {
+        } catch (err) {
           fail += 1
+          const detail = err.response?.data?.detail || err.response?.data || err.message || 'Unknown error'
+          if (rowErrors.length < 3) {
+            rowErrors.push(`Row ${rowIndex + 1}: ${detail}`)
+          }
         }
       }
-      setMessage(`Import finished. Success: ${success}, Failed: ${fail}`)
-      setTimeout(() => navigate(role === 'admin' ? '/admin/students' : '/clerk/students'), 1200)
+
+      let summary = `Import finished. Success: ${success}, Failed: ${fail}`
+      if (rowErrors.length) {
+        summary += ` - ${rowErrors.join('; ')}`
+      }
+      setMessage(summary)
+
+      if (fail === 0) {
+        setTimeout(() => navigate(role === 'admin' ? '/admin/students' : '/clerk/students'), 1200)
+      }
     } catch {
       setMessage('Import failed. Please check CSV format.')
     } finally {

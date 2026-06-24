@@ -31,9 +31,10 @@ client.interceptors.response.use(
         localStorage.removeItem('access_token')
         localStorage.removeItem('user')
         window.location.href = '/login'
+        return Promise.reject(error)
       }
     }
-    throw error
+    return Promise.reject(error)
   }
 )
 

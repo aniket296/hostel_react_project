@@ -15,6 +15,7 @@ export default function StudentListPage({ role }) {
   const { data, setData, loading, error } = useApi(() => client.get(`/students/${query}`), [query])
   const students = Array.isArray(data) ? data.filter((s) => !hostel || s.hostel === hostel) : []
   const [selectedIds, setSelectedIds] = useState([])
+  const [statusMessage, setStatusMessage] = useState('')
 
   const base = role === 'admin' ? '/admin/students' : '/clerk/students'
 
@@ -28,18 +29,33 @@ export default function StudentListPage({ role }) {
 
   async function deleteOne(id) {
     if (!window.confirm('Delete this student?')) return
-    await client.delete(`/students/${id}/`)
-    setData((old) => (old || []).filter((item) => item.id !== id))
-    setSelectedIds((old) => old.filter((x) => x !== id))
+    try {
+      await client.delete(`/students/${id}/`)
+      setData((old) => (old || []).filter((item) => item.id !== id))
+      setSelectedIds((old) => old.filter((x) => x !== id))
+      setStatusMessage('')
+    } catch {
+      setStatusMessage('Failed to delete the student. Please try again.')
+    }
   }
 
   async function bulkDelete() {
     if (!selectedIds.length || !window.confirm('Delete selected students?')) return
+    const failedIds = []
     for (const id of selectedIds) {
-      try { await client.delete(`/students/${id}/`) } catch {}
+      try {
+        await client.delete(`/students/${id}/`)
+      } catch {
+        failedIds.push(id)
+      }
     }
     setData((old) => (old || []).filter((item) => !selectedIds.includes(item.id)))
     setSelectedIds([])
+    if (failedIds.length) {
+      setStatusMessage(`Failed to delete ${failedIds.length} selected student${failedIds.length > 1 ? 's' : ''}.`)
+    } else {
+      setStatusMessage('')
+    }
   }
 
   function exportStudents() {
@@ -76,6 +92,7 @@ export default function StudentListPage({ role }) {
 
       {loading && <div className='loading-box'>Loading students...</div>}
       {error && <div className='error-box'>{error}</div>}
+      {statusMessage && <div className='error-box'>{statusMessage}</div>}
 
       {!loading && !error && (
         <>

@@ -5,6 +5,7 @@ from rest_framework import generics, permissions
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from students.models import Student, Department
@@ -66,7 +67,7 @@ class RefreshApiView(APIView):
         try:
             token = RefreshToken(raw)
             return Response({"access": str(token.access_token)})
-        except Exception:
+        except TokenError:
             return Response({"detail": "Invalid refresh token."}, status=401)
 
 
@@ -155,7 +156,7 @@ class StudentListCreateApiView(generics.ListCreateAPIView):
         phone = data["phone_number"]
         if User.objects.filter(phone_number=phone).exists():
             return Response({"phone_number": ["Phone number already exists."]}, status=400)
-        user = User.objects.create_user(username=None, phone_number=phone, password=data.get("password") or phone, role=User.ROLE_STUDENT)
+        user = User.objects.create_user(username=phone, phone_number=phone, password=data.get("password") or phone, role=User.ROLE_STUDENT)
         student = Student.objects.create(user=user, full_name=data["full_name"], phone_number=phone, department=data.get("department"), year=data["year"], gender=data["gender"], room_number=data["room_number"])
         return Response(StudentSerializer(student).data, status=201)
 
@@ -169,10 +170,17 @@ class StudentDetailApiView(generics.RetrieveUpdateDestroyAPIView):
         student = self.get_object()
         serializer = StudentCreateUpdateSerializer(student, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
+        phone_number = serializer.validated_data.get("phone_number")
+        if phone_number and User.objects.filter(phone_number=phone_number).exclude(pk=student.user.pk).exists():
+            return Response({"phone_number": ["Phone number already exists."]}, status=400)
         for attr, value in serializer.validated_data.items():
             if attr != "password":
                 setattr(student, attr, value)
         student.save()
+        if phone_number:
+            student.user.phone_number = phone_number
+            student.user.username = phone_number
+            student.user.save(update_fields=["phone_number", "username"])
         if serializer.validated_data.get("password"):
             student.user.set_password(serializer.validated_data["password"])
             student.user.save(update_fields=["password"])
@@ -216,9 +224,13 @@ class ClerkDetailApiView(generics.RetrieveUpdateDestroyAPIView):
         serializer = ClerkCreateUpdateSerializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
-        if "username" in data:
+        if "username" in data and data["username"] != clerk.user.username:
+            if User.objects.filter(username=data["username"]).exclude(pk=clerk.user.pk).exists():
+                return Response({"username": ["Username already exists."]}, status=400)
             clerk.user.username = data["username"]
-        if "phone_number" in data:
+        if "phone_number" in data and data["phone_number"] != clerk.user.phone_number:
+            if data["phone_number"] and User.objects.filter(phone_number=data["phone_number"]).exclude(pk=clerk.user.pk).exists():
+                return Response({"phone_number": ["Phone number already exists."]}, status=400)
             clerk.user.phone_number = data["phone_number"] or None
             clerk.phone_number = data["phone_number"]
         if data.get("password"):
@@ -274,24 +286,25 @@ class StudentComplaintCreateApiView(APIView):
 
 
 class ComplaintActionApiView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminOrClerkRole]
 
     def post(self, request, pk, action):
         complaint = get_object_or_404(Complaint, pk=pk)
-        if action == "assign-worker":
-            if request.user.role not in [User.ROLE_ADMIN, User.ROLE_CLERK]:
+        # Verify clerk can only modify complaints in their assigned hostel
+        if request.user.role == User.ROLE_CLERK:
+            clerk = getattr(request.user, "clerk_profile", None)
+            if not clerk or complaint.hostel_snapshot != clerk.assigned_hostel:
                 return Response({"detail": "Forbidden"}, status=403)
+        if action == "assign-worker":
             assign_worker_and_start(complaint=complaint, worker_name=(request.data.get("worker_name") or "").strip(), changed_by_user=request.user)
         elif action == "mark-completed":
-            if request.user.role not in [User.ROLE_ADMIN, User.ROLE_CLERK]:
-                return Response({"detail": "Forbidden"}, status=403)
             mark_completed(complaint=complaint, changed_by_user=request.user)
         elif action == "mark-solved":
             mark_solved(complaint=complaint, changed_by_user=request.user)
         elif action == "mark-unsolved":
             mark_unsolved(complaint=complaint, changed_by_user=request.user)
         elif action == "reopen":
-            reopen_unsolved(complaint=complaint, changed_by_user=request.user)
+            reopen_unsolved(complaint=complaint, changed_by_user=request.user, new_worker_name=(request.data.get("worker_name") or "").strip() or None)
         else:
             return Response({"detail": "Unknown action."}, status=400)
         complaint.refresh_from_db()
@@ -305,6 +318,7 @@ class SubjectListApiView(generics.ListAPIView):
 
 class AcademicListCreateApiView(generics.ListCreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsStudentRole]
 
     def get_queryset(self):
         queryset = AcademicFile.objects.select_related("department", "subject")
@@ -327,6 +341,7 @@ class AcademicListCreateApiView(generics.ListCreateAPIView):
 class AcademicDetailApiView(generics.RetrieveDestroyAPIView):
     queryset = AcademicFile.objects.select_related("department", "subject")
     serializer_class = AcademicFileSerializer
+    permission_classes = [IsAdminRole]
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()

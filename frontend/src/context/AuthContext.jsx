@@ -6,13 +6,22 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const raw = localStorage.getItem('user')
-    return raw ? JSON.parse(raw) : null
+    if (!raw) return null
+
+    try {
+      return JSON.parse(raw)
+    } catch {
+      localStorage.removeItem('user')
+      return null
+    }
   })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const token = localStorage.getItem('access_token')
     if (!token) {
+      localStorage.removeItem('user')
+      setUser(null)
       setLoading(false)
       return
     }
@@ -40,7 +49,9 @@ export function AuthProvider({ children }) {
   const logout = async () => {
     try {
       await client.post('/auth/logout/')
-    } catch {}
+    } catch (error) {
+      console.error('Logout request failed:', error)
+    }
     localStorage.removeItem('access_token')
     localStorage.removeItem('user')
     setUser(null)
