@@ -166,6 +166,9 @@ class AcademicFileCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class FeedbackQuestionSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(source="question_text", read_only=True)
+    order = serializers.IntegerField(source="display_order", read_only=True)
+
     class Meta:
         model = FeedbackQuestion
         fields = ["id", "text", "question_type", "radio_options", "order"]
@@ -173,14 +176,28 @@ class FeedbackQuestionSerializer(serializers.ModelSerializer):
 
 class FeedbackFormSerializer(serializers.ModelSerializer):
     questions = FeedbackQuestionSerializer(many=True, read_only=True)
+    is_active = serializers.SerializerMethodField()
+    started_at = serializers.DateTimeField(source="activated_at", read_only=True)
+    ends_at = serializers.DateTimeField(source="expires_at", read_only=True)
 
     class Meta:
         model = FeedbackForm
         fields = ["id", "name", "hostel", "duration_hours", "status", "is_active", "started_at", "ends_at", "created_at", "questions"]
 
+    def get_is_active(self, obj):
+        return obj.is_available_to_students
+
+
+class FeedbackFormCreateSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=200)
+    hostel = serializers.ChoiceField(choices=FeedbackForm.HOSTEL_CHOICES)
+    duration_hours = serializers.IntegerField()
+    questions = serializers.ListField(child=serializers.DictField(), allow_empty=False)
+
 
 class FeedbackAnswerSerializer(serializers.ModelSerializer):
-    question_text = serializers.CharField(source="question.text", read_only=True)
+    question_text = serializers.CharField(source="question.question_text", read_only=True)
+    answer_text = serializers.CharField(source="answer_value", read_only=True)
 
     class Meta:
         model = FeedbackAnswer
@@ -204,7 +221,14 @@ class SystemSettingsSerializer(serializers.ModelSerializer):
 
 class BackupRecordSerializer(serializers.ModelSerializer):
     created_by = serializers.CharField(source="created_by_user.username", read_only=True)
+    download_url = serializers.SerializerMethodField()
 
     class Meta:
         model = BackupRecord
-        fields = ["id", "backup_file", "created_by", "created_at", "notes"]
+        fields = ["id", "backup_file", "created_by", "created_at", "notes", "download_url"]
+
+    def get_download_url(self, obj):
+        request = self.context.get("request")
+        if request and obj.backup_file:
+            return request.build_absolute_uri(f"/media/{obj.backup_file.name}")
+        return obj.backup_file.url if obj.backup_file else ""

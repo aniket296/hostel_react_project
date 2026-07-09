@@ -51,7 +51,7 @@ export default function StudentFeedbackPage() {
                     </select>
                   ) : question.question_type === 'radio' ? (
                     <div style={{ marginTop: 8 }}>
-                      {(question.radio_options || '').split(',').map((option) => option.trim()).filter(Boolean).map((option) => (
+                      {(question.radio_options || '').split(/\r?\n|,/).map((option) => option.trim()).filter(Boolean).map((option) => (
                         <div style={{ marginBottom: 6 }} key={option}>
                           <label style={{ fontWeight: 'normal' }}><input type='radio' name={`q_${question.id}`} value={option} checked={answers[question.id] === option} onChange={(e) => setAnswers({ ...answers, [question.id]: e.target.value })} required /> {option}</label>
                         </div>

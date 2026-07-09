@@ -225,8 +225,24 @@ def build_feedback_analysis(feedback_form):
 
     return {
         "question_stats": question_stats,
+        "overall_analysis": [
+            {
+                "question": item["question"].question_text,
+                "question_text": item["question"].question_text,
+                "average_rating": item["average_rating"],
+                "total_responses": item["total_responses"],
+                "most_frequent_rating": item["most_frequent_rating"],
+                "count_1": item["count_1"],
+                "count_2": item["count_2"],
+                "count_3": item["count_3"],
+                "count_4": item["count_4"],
+                "count_5": item["count_5"],
+            }
+            for item in question_stats
+        ],
         "questions": questions,
         "student_rows": student_rows,
+        "student_feedback_details": student_rows,
     }
 
 

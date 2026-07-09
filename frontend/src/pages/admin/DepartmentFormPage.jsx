@@ -13,13 +13,16 @@ export default function DepartmentFormPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    client.get('/departments/').then((res) => {
-      const list = Array.isArray(res.data) ? res.data : []
+    const requests = [client.get('/departments/')]
+    if (editing) {
+      requests.push(client.get(`/departments/${id}/`))
+    }
+
+    Promise.all(requests).then(([listRes, detailRes]) => {
+      const list = Array.isArray(listRes.data) ? listRes.data : []
       setDepartments(list)
       if (editing) {
-        const dept = list.find((item) => String(item.id) === String(id))
-        if (dept) setName(dept.name)
-        else setError('Department not found in current API list.')
+        setName(detailRes?.data?.name || '')
       }
     }).catch((err) => setError(err.response?.data?.detail || 'Failed to load departments.')).finally(() => setLoading(false))
   }, [editing, id])
@@ -29,11 +32,8 @@ export default function DepartmentFormPage() {
     setSaving(true)
     setError('')
     try {
-      if (editing) {
-        setError('Department edit is not available in the current backend API yet.')
-        return
-      }
-      await client.post('/departments/', { name })
+      if (editing) await client.put(`/departments/${id}/`, { name })
+      else await client.post('/departments/', { name })
       navigate('/admin/departments')
     } catch (err) {
       const data = err.response?.data
@@ -64,7 +64,7 @@ export default function DepartmentFormPage() {
           </form>
         </div>
       </div>
-      {editing && departments.length > 0 && <div className='readonly-box'>This page is visible for route completeness, but department edit/delete needs backend API support.</div>}
+      {editing && departments.length > 0 && <div className='readonly-box'>Department editing is now connected to the API.</div>}
     </>
   )
 }

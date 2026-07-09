@@ -44,7 +44,16 @@ export default function AcademicUploadPage({ role }) {
             <div className='form-row'><label>Course Code</label><input value={form.course_code} onChange={(e) => setForm({ ...form, course_code: e.target.value })} /></div>
             <div className='form-row'><label>Department</label><select value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} required><option value=''>Select Department</option>{Array.isArray(departments) && departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</select></div>
             <div className='form-row'><label>Year</label><select value={form.year} onChange={(e) => setForm({ ...form, year: e.target.value })}><option value='year_1'>Year 1</option><option value='year_2'>Year 2</option><option value='year_3'>Year 3</option></select></div>
-            <div className='form-row'><label>File Type</label><select value={form.file_type} onChange={(e) => setForm({ ...form, file_type: e.target.value })}><option value='notes'>Notes</option><option value='pyq'>Previous Year Question Papers</option><option value='syllabus'>Syllabus</option></select></div>
+            <div className='form-row'>
+              <label>File Type</label>
+              <select value={form.file_type} onChange={(e) => setForm({ ...form, file_type: e.target.value })}>
+                <option value='notes'>Notes</option>
+                <option value='pyq_pt'>PYQ PT</option>
+                <option value='pyq_semester'>PYQ Semester</option>
+                <option value='question_bank'>Question Bank</option>
+                <option value='curriculum'>Curriculum</option>
+              </select>
+            </div>
             <div className='form-row'><label>Choose File</label><input type='file' onChange={(e) => setForm({ ...form, file: e.target.files?.[0] || null })} required /></div>
             <div className='top-actions' style={{ marginTop: 8 }}>
               <button className='action-btn' type='submit' disabled={busy}>{busy ? 'Uploading...' : 'Upload File'}</button>

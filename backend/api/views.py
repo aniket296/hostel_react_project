@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from rest_framework.parsers import FormParser, MultiPartParser
+from django.http import FileResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
@@ -14,14 +15,16 @@ from complaints.models import Complaint
 from academics.models import AcademicFile, Subject
 from feedbacks.models import FeedbackForm
 from feedbacks.services import build_feedback_analysis, get_active_feedback_form_for_hostel, has_student_submitted_feedback, submit_feedback_form
+from feedbacks.services import create_feedback_form_with_questions, delete_feedback_form, export_feedback_analysis_csv, get_all_feedback_forms, stop_feedback_form
 from complaints.services import create_student_complaint, assign_worker_and_start, mark_completed, mark_solved, mark_unsolved, reopen_unsolved
 from core.models import SystemSettings, BackupRecord
+from core.utils import create_mysql_backup, restore_mysql_backup
 from .permissions import IsAdminRole, IsAdminOrClerkRole, IsStudentRole
 from .serializers import (
     UserSerializer, DepartmentSerializer, StudentSerializer, StudentCreateUpdateSerializer,
     ClerkSerializer, ClerkCreateUpdateSerializer, ComplaintSerializer, ComplaintCreateSerializer,
     AcademicFileSerializer, AcademicFileCreateSerializer, SubjectSerializer,
-    FeedbackFormSerializer, SystemSettingsSerializer, BackupRecordSerializer,
+    FeedbackFormSerializer, FeedbackFormCreateSerializer, SystemSettingsSerializer, BackupRecordSerializer,
 )
 
 User = get_user_model()
@@ -132,6 +135,12 @@ class DepartmentListCreateApiView(generics.ListCreateAPIView):
         if self.request.method == "GET":
             return [permissions.IsAuthenticated()]
         return [IsAdminRole()]
+
+
+class DepartmentDetailApiView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAdminRole]
 
 
 class StudentListCreateApiView(generics.ListCreateAPIView):
@@ -286,12 +295,17 @@ class StudentComplaintCreateApiView(APIView):
 
 
 class ComplaintActionApiView(APIView):
-    permission_classes = [IsAdminOrClerkRole]
+    permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request, pk, action):
         complaint = get_object_or_404(Complaint, pk=pk)
-        # Verify clerk can only modify complaints in their assigned hostel
-        if request.user.role == User.ROLE_CLERK:
+        if request.user.role == User.ROLE_STUDENT:
+            student = getattr(request.user, "student_profile", None)
+            if not student or complaint.student_id != student.id:
+                return Response({"detail": "Forbidden"}, status=403)
+            if action not in {"mark-solved", "mark-unsolved"}:
+                return Response({"detail": "Forbidden"}, status=403)
+        elif request.user.role == User.ROLE_CLERK:
             clerk = getattr(request.user, "clerk_profile", None)
             if not clerk or complaint.hostel_snapshot != clerk.assigned_hostel:
                 return Response({"detail": "Forbidden"}, status=403)
@@ -318,7 +332,7 @@ class SubjectListApiView(generics.ListAPIView):
 
 class AcademicListCreateApiView(generics.ListCreateAPIView):
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [IsStudentRole]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         queryset = AcademicFile.objects.select_related("department", "subject")
@@ -341,7 +355,7 @@ class AcademicListCreateApiView(generics.ListCreateAPIView):
 class AcademicDetailApiView(generics.RetrieveDestroyAPIView):
     queryset = AcademicFile.objects.select_related("department", "subject")
     serializer_class = AcademicFileSerializer
-    permission_classes = [IsAdminRole]
+    permission_classes = [IsAdminOrClerkRole]
 
     def destroy(self, request, *args, **kwargs):
         obj = self.get_object()
@@ -350,9 +364,11 @@ class AcademicDetailApiView(generics.RetrieveDestroyAPIView):
 
 
 class FeedbackFormListApiView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
     def get(self, request):
         if request.user.role == User.ROLE_ADMIN:
-            forms = FeedbackForm.objects.prefetch_related("questions").all().order_by("-created_at")
+            forms = get_all_feedback_forms().prefetch_related("questions")
             return Response(FeedbackFormSerializer(forms, many=True).data)
         student = getattr(request.user, "student_profile", None)
         if not student:
@@ -364,6 +380,40 @@ class FeedbackFormListApiView(APIView):
         data["already_submitted"] = has_student_submitted_feedback(active, student)
         return Response([data])
 
+    def post(self, request):
+        if request.user.role != User.ROLE_ADMIN:
+            return Response({"detail": "Forbidden"}, status=403)
+        serializer = FeedbackFormCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            form = create_feedback_form_with_questions(
+                admin_user=request.user,
+                name=serializer.validated_data["name"],
+                hostel=serializer.validated_data["hostel"],
+                duration_hours=serializer.validated_data["duration_hours"],
+                questions=serializer.validated_data["questions"],
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        return Response(FeedbackFormSerializer(form).data, status=201)
+
+
+class FeedbackFormActionApiView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk, action):
+        form = get_object_or_404(FeedbackForm, pk=pk)
+        try:
+            if action == "stop":
+                stop_feedback_form(form)
+            elif action == "delete":
+                delete_feedback_form(form)
+            else:
+                return Response({"detail": "Unknown action."}, status=400)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=400)
+        return Response({"detail": "OK"})
+
 
 class FeedbackSubmitApiView(APIView):
     permission_classes = [IsStudentRole]
@@ -371,6 +421,8 @@ class FeedbackSubmitApiView(APIView):
     def post(self, request, pk):
         student = request.user.student_profile
         form = get_object_or_404(FeedbackForm.objects.prefetch_related("questions"), pk=pk)
+        if form.hostel != student.hostel:
+            return Response({"detail": "This feedback form is not available for your hostel."}, status=403)
         answers = request.data.get("answers") or {}
         submission = submit_feedback_form(form, student, {str(k): v for k, v in answers.items()})
         return Response({"submission_id": submission.id}, status=201)
@@ -404,8 +456,68 @@ class SystemSettingsApiView(APIView):
     def get(self, request):
         return Response(SystemSettingsSerializer(SystemSettings.get_solo()).data)
 
+    def patch(self, request):
+        settings_obj = SystemSettings.get_solo()
+        serializer = SystemSettingsSerializer(settings_obj, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(SystemSettingsSerializer(settings_obj).data)
+
+    def put(self, request):
+        return self.patch(request)
+
 
 class BackupListApiView(generics.ListAPIView):
     queryset = BackupRecord.objects.select_related("created_by_user").all()
     serializer_class = BackupRecordSerializer
     permission_classes = [IsAdminRole]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+    def post(self, request):
+        try:
+            temp_path, file_name = create_mysql_backup()
+            with open(temp_path, "rb") as backup_file:
+                record = BackupRecord(created_by_user=request.user)
+                record.backup_file.save(file_name, backup_file, save=True)
+            if temp_path:
+                import os
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
+            return Response(BackupRecordSerializer(record, context={"request": request}).data, status=201)
+        except Exception as exc:
+            return Response({"detail": f"Backup failed: {exc}"}, status=400)
+
+
+class BackupActionApiView(APIView):
+    permission_classes = [IsAdminRole]
+
+    def post(self, request, pk, action):
+        backup = get_object_or_404(BackupRecord, pk=pk)
+        if action == "restore":
+            if not backup.backup_file:
+                return Response({"detail": "Backup file not found."}, status=400)
+            try:
+                restore_mysql_backup(backup.backup_file.path)
+            except Exception as exc:
+                return Response({"detail": f"Restore failed: {exc}"}, status=400)
+            return Response({"detail": "Database restored successfully."})
+        if action == "delete":
+            backup.delete()
+            return Response({"detail": "Deleted."})
+        return Response({"detail": "Unknown action."}, status=400)
+
+    def get(self, request, pk, action):
+        if action != "download":
+            return Response({"detail": "Unknown action."}, status=400)
+        backup = get_object_or_404(BackupRecord, pk=pk)
+        if not backup.backup_file:
+            return Response({"detail": "Backup file not found."}, status=404)
+        return FileResponse(
+            backup.backup_file.open("rb"),
+            as_attachment=True,
+            filename=backup.backup_file.name.split("/")[-1],
+        )

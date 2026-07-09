@@ -1,11 +1,11 @@
 from django.urls import path
 from .views import (
     LoginApiView, RefreshApiView, LogoutApiView, MeApiView, DashboardSummaryApiView,
-    DepartmentListCreateApiView, StudentListCreateApiView, StudentDetailApiView,
+    DepartmentListCreateApiView, DepartmentDetailApiView, StudentListCreateApiView, StudentDetailApiView,
     ClerkListCreateApiView, ClerkDetailApiView, ComplaintListApiView, StudentComplaintCreateApiView,
     ComplaintActionApiView, AcademicListCreateApiView, AcademicDetailApiView, SubjectListApiView,
-    FeedbackFormListApiView, FeedbackSubmitApiView, FeedbackAnalysisApiView,
-    LockedAccountsApiView, SystemSettingsApiView, BackupListApiView,
+    FeedbackFormListApiView, FeedbackFormActionApiView, FeedbackSubmitApiView, FeedbackAnalysisApiView,
+    LockedAccountsApiView, SystemSettingsApiView, BackupListApiView, BackupActionApiView,
 )
 
 urlpatterns = [
@@ -15,6 +15,7 @@ urlpatterns = [
     path("auth/me/", MeApiView.as_view()),
     path("dashboard/summary/", DashboardSummaryApiView.as_view()),
     path("departments/", DepartmentListCreateApiView.as_view()),
+    path("departments/<int:pk>/", DepartmentDetailApiView.as_view()),
     path("students/", StudentListCreateApiView.as_view()),
     path("students/<int:pk>/", StudentDetailApiView.as_view()),
     path("clerks/", ClerkListCreateApiView.as_view()),
@@ -26,9 +27,11 @@ urlpatterns = [
     path("academics/", AcademicListCreateApiView.as_view()),
     path("academics/<int:pk>/", AcademicDetailApiView.as_view()),
     path("feedback/forms/", FeedbackFormListApiView.as_view()),
+    path("feedback/forms/<int:pk>/<str:action>/", FeedbackFormActionApiView.as_view()),
     path("feedback/forms/<int:pk>/submit/", FeedbackSubmitApiView.as_view()),
     path("feedback/analysis/<int:pk>/", FeedbackAnalysisApiView.as_view()),
     path("locked-accounts/", LockedAccountsApiView.as_view()),
     path("system-settings/", SystemSettingsApiView.as_view()),
     path("backups/", BackupListApiView.as_view()),
+    path("backups/<int:pk>/<str:action>/", BackupActionApiView.as_view()),
 ]
