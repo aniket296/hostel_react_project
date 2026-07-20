@@ -1,6 +1,7 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+import os
 from rest_framework import generics, permissions
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.http import FileResponse
@@ -35,6 +36,15 @@ def _tokens_for_user(user):
     return {"refresh": str(refresh), "access": str(refresh.access_token)}
 
 
+def _refresh_cookie_kwargs():
+    return {
+        "httponly": True,
+        "samesite": os.getenv("AUTH_COOKIE_SAMESITE", "Lax"),
+        "secure": os.getenv("AUTH_COOKIE_SECURE", "True").lower() == "true",
+        "path": "/",
+    }
+
+
 class LoginApiView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -56,7 +66,7 @@ class LoginApiView(APIView):
         authed.reset_login_attempts()
         tokens = _tokens_for_user(authed)
         response = Response({"user": UserSerializer(authed).data, **tokens})
-        response.set_cookie("refresh_token", tokens["refresh"], httponly=True, samesite="Lax")
+        response.set_cookie("refresh_token", tokens["refresh"], **_refresh_cookie_kwargs())
         return response
 
 
@@ -77,7 +87,13 @@ class RefreshApiView(APIView):
 class LogoutApiView(APIView):
     def post(self, request):
         response = Response({"detail": "Logged out."})
-        response.delete_cookie("refresh_token")
+        raw = request.COOKIES.get("refresh_token")
+        if raw:
+            try:
+                RefreshToken(raw).blacklist()
+            except Exception:
+                pass
+        response.delete_cookie("refresh_token", path="/")
         return response
 
 
@@ -361,6 +377,28 @@ class AcademicDetailApiView(generics.RetrieveDestroyAPIView):
         obj = self.get_object()
         obj.delete()
         return Response(status=204)
+
+
+class AcademicDownloadApiView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        obj = get_object_or_404(AcademicFile.objects.select_related("department", "subject"), pk=pk)
+        if request.user.role == User.ROLE_STUDENT:
+            student = getattr(request.user, "student_profile", None)
+            if not student:
+                return Response({"detail": "Forbidden"}, status=403)
+        elif request.user.role not in {User.ROLE_ADMIN, User.ROLE_CLERK}:
+            return Response({"detail": "Forbidden"}, status=403)
+
+        if not obj.file or not obj.file.storage.exists(obj.file.name):
+            return Response({"detail": "File not found."}, status=404)
+
+        return FileResponse(
+            obj.file.open("rb"),
+            as_attachment=True,
+            filename=os.path.basename(obj.file.name),
+        )
 
 
 class FeedbackFormListApiView(APIView):

@@ -131,7 +131,7 @@ class AcademicFileSerializer(serializers.ModelSerializer):
     def get_download_url(self, obj):
         request = self.context.get("request")
         if request:
-            return request.build_absolute_uri(f"/media/{obj.file.name}")
+            return request.build_absolute_uri(f"/api/academics/{obj.id}/download/")
         return obj.file.url if obj.file else ""
 
 

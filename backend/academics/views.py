@@ -119,6 +119,9 @@ def student_academic_upload_view(request):
 def academic_download_view(request, pk):
     file_obj = get_object_or_404(AcademicFile, pk=pk)
 
+    if request.user.role not in ["student", "clerk", "admin"]:
+        return redirect("login")
+
     if not file_obj.file or not file_obj.file.storage.exists(file_obj.file.name):
         raise Http404("File not found.")
 

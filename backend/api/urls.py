@@ -4,6 +4,7 @@ from .views import (
     DepartmentListCreateApiView, DepartmentDetailApiView, StudentListCreateApiView, StudentDetailApiView,
     ClerkListCreateApiView, ClerkDetailApiView, ComplaintListApiView, StudentComplaintCreateApiView,
     ComplaintActionApiView, AcademicListCreateApiView, AcademicDetailApiView, SubjectListApiView,
+    AcademicDownloadApiView,
     FeedbackFormListApiView, FeedbackFormActionApiView, FeedbackSubmitApiView, FeedbackAnalysisApiView,
     LockedAccountsApiView, SystemSettingsApiView, BackupListApiView, BackupActionApiView,
 )
@@ -26,6 +27,7 @@ urlpatterns = [
     path("subjects/", SubjectListApiView.as_view()),
     path("academics/", AcademicListCreateApiView.as_view()),
     path("academics/<int:pk>/", AcademicDetailApiView.as_view()),
+    path("academics/<int:pk>/download/", AcademicDownloadApiView.as_view()),
     path("feedback/forms/", FeedbackFormListApiView.as_view()),
     path("feedback/forms/<int:pk>/<str:action>/", FeedbackFormActionApiView.as_view()),
     path("feedback/forms/<int:pk>/submit/", FeedbackSubmitApiView.as_view()),
