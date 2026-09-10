@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
+from django.db.models import F
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
 
@@ -53,7 +54,7 @@ def login_view(request):
                 login(request, authenticated_user)
                 messages.success(
                     request,
-                    f"Welcome, {authenticated_user.get_display_name()}!"
+                    f"Welcome, {authenticated_user.get_display_name()}!",
                 )
                 return redirect(get_dashboard_url(authenticated_user))
 
@@ -61,17 +62,20 @@ def login_view(request):
                 if user.role == User.ROLE_ADMIN:
                     messages.error(request, "Invalid credentials.")
                 else:
-                    user.failed_login_attempts += 1
+                    # V-09 fix: use atomic F() expression to avoid race condition when
+                    # concurrent bad-password attempts read the same stale counter value.
+                    User.objects.filter(pk=user.pk).update(
+                        failed_login_attempts=F("failed_login_attempts") + 1
+                    )
+                    user.refresh_from_db(fields=["failed_login_attempts"])
                     if user.failed_login_attempts >= 3:
-                        user.is_locked = True
-                        user.save(update_fields=["failed_login_attempts", "is_locked"])
+                        User.objects.filter(pk=user.pk).update(is_locked=True)
                         messages.error(request, "Account locked. Please contact Admin.")
                     else:
-                        user.save(update_fields=["failed_login_attempts"])
                         remaining = 3 - user.failed_login_attempts
                         messages.error(
                             request,
-                            f"Invalid credentials. {remaining} attempt(s) remaining."
+                            f"Invalid credentials. {remaining} attempt(s) remaining.",
                         )
             else:
                 messages.error(request, "Invalid credentials.")

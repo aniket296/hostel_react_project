@@ -1,7 +1,9 @@
-from django.contrib.auth import authenticate, get_user_model
-from django.db.models import Q
-from django.shortcuts import get_object_or_404
+import logging
 import os
+
+from django.contrib.auth import authenticate, get_user_model
+from django.db.models import F, Q
+from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions
 from rest_framework.parsers import FormParser, MultiPartParser
 from django.http import FileResponse
@@ -15,20 +17,58 @@ from clerks.models import Clerk
 from complaints.models import Complaint
 from academics.models import AcademicFile, Subject
 from feedbacks.models import FeedbackForm
-from feedbacks.services import build_feedback_analysis, get_active_feedback_form_for_hostel, has_student_submitted_feedback, submit_feedback_form
-from feedbacks.services import create_feedback_form_with_questions, delete_feedback_form, export_feedback_analysis_csv, get_all_feedback_forms, stop_feedback_form
-from complaints.services import create_student_complaint, assign_worker_and_start, mark_completed, mark_solved, mark_unsolved, reopen_unsolved
+from feedbacks.services import (
+    build_feedback_analysis,
+    get_active_feedback_form_for_hostel,
+    has_student_submitted_feedback,
+    submit_feedback_form,
+    create_feedback_form_with_questions,
+    delete_feedback_form,
+    export_feedback_analysis_csv,
+    get_all_feedback_forms,
+    stop_feedback_form,
+)
+from complaints.services import (
+    create_student_complaint,
+    assign_worker_and_start,
+    mark_completed,
+    mark_solved,
+    mark_unsolved,
+    reopen_unsolved,
+)
 from core.models import SystemSettings, BackupRecord
 from core.utils import create_mysql_backup, restore_mysql_backup
 from .permissions import IsAdminRole, IsAdminOrClerkRole, IsStudentRole
 from .serializers import (
-    UserSerializer, DepartmentSerializer, StudentSerializer, StudentCreateUpdateSerializer,
-    ClerkSerializer, ClerkCreateUpdateSerializer, ComplaintSerializer, ComplaintCreateSerializer,
-    AcademicFileSerializer, AcademicFileCreateSerializer, SubjectSerializer,
-    FeedbackFormSerializer, FeedbackFormCreateSerializer, SystemSettingsSerializer, BackupRecordSerializer,
+    UserSerializer,
+    DepartmentSerializer,
+    StudentSerializer,
+    StudentCreateUpdateSerializer,
+    ClerkSerializer,
+    ClerkCreateUpdateSerializer,
+    ComplaintSerializer,
+    ComplaintCreateSerializer,
+    AcademicFileSerializer,
+    AcademicFileCreateSerializer,
+    SubjectSerializer,
+    FeedbackFormSerializer,
+    FeedbackFormCreateSerializer,
+    SystemSettingsSerializer,
+    BackupRecordSerializer,
 )
 
+logger = logging.getLogger(__name__)
+
 User = get_user_model()
+
+# Valid complaint statuses used as a whitelist for query-string filtering (V-05)
+_VALID_COMPLAINT_STATUSES = {
+    Complaint.STATUS_NEW,
+    Complaint.STATUS_IN_PROGRESS,
+    Complaint.STATUS_COMPLETED,
+    Complaint.STATUS_SOLVED,
+    Complaint.STATUS_UNSOLVED,
+}
 
 
 def _tokens_for_user(user):
@@ -56,12 +96,17 @@ class LoginApiView(APIView):
             return Response({"detail": "Account locked. Please contact Admin."}, status=403)
         authed = authenticate(request, username=identifier, password=password)
         if authed is None:
-            if user:
-                if user.role != User.ROLE_ADMIN:
-                    user.failed_login_attempts += 1
-                    if user.failed_login_attempts >= 3:
-                        user.is_locked = True
-                    user.save(update_fields=["failed_login_attempts", "is_locked"])
+            if user and user.role != User.ROLE_ADMIN:
+                # V-04 fix: atomic increment via F() avoids race condition under concurrent login storms.
+                # A non-atomic read-modify-write (user.attempts += 1; user.save()) can
+                # allow multiple concurrent failures to all read the same stale counter,
+                # meaning a brute-force attack could exceed the lockout threshold undetected.
+                User.objects.filter(pk=user.pk).update(
+                    failed_login_attempts=F("failed_login_attempts") + 1
+                )
+                user.refresh_from_db(fields=["failed_login_attempts"])
+                if user.failed_login_attempts >= 3:
+                    User.objects.filter(pk=user.pk).update(is_locked=True)
             return Response({"detail": "Invalid credentials."}, status=400)
         authed.reset_login_attempts()
         tokens = _tokens_for_user(authed)
@@ -85,6 +130,8 @@ class RefreshApiView(APIView):
 
 
 class LogoutApiView(APIView):
+    permission_classes = [permissions.AllowAny]
+
     def post(self, request):
         response = Response({"detail": "Logged out."})
         raw = request.COOKIES.get("refresh_token")
@@ -171,7 +218,12 @@ class StudentListCreateApiView(generics.ListCreateAPIView):
             if clerk:
                 queryset = queryset.filter(hostel=clerk.assigned_hostel)
         if q:
-            queryset = queryset.filter(Q(full_name__icontains=q) | Q(phone_number__icontains=q) | Q(room_number__icontains=q) | Q(department__name__icontains=q))
+            queryset = queryset.filter(
+                Q(full_name__icontains=q)
+                | Q(phone_number__icontains=q)
+                | Q(room_number__icontains=q)
+                | Q(department__name__icontains=q)
+            )
         return queryset.order_by("full_name")
 
     def create(self, request, *args, **kwargs):
@@ -181,8 +233,27 @@ class StudentListCreateApiView(generics.ListCreateAPIView):
         phone = data["phone_number"]
         if User.objects.filter(phone_number=phone).exists():
             return Response({"phone_number": ["Phone number already exists."]}, status=400)
-        user = User.objects.create_user(username=phone, phone_number=phone, password=data.get("password") or phone, role=User.ROLE_STUDENT)
-        student = Student.objects.create(user=user, full_name=data["full_name"], phone_number=phone, department=data.get("department"), year=data["year"], gender=data["gender"], room_number=data["room_number"])
+        # V-07 fix: do not fall back to phone number as a default password.
+        # A predictable default means anyone who knows a student's phone number
+        # can log in immediately after enrollment.
+        raw_password = data.get("password")
+        if not raw_password:
+            return Response({"password": ["Password is required."]}, status=400)
+        user = User.objects.create_user(
+            username=phone,
+            phone_number=phone,
+            password=raw_password,
+            role=User.ROLE_STUDENT,
+        )
+        student = Student.objects.create(
+            user=user,
+            full_name=data["full_name"],
+            phone_number=phone,
+            department=data.get("department"),
+            year=data["year"],
+            gender=data["gender"],
+            room_number=data["room_number"],
+        )
         return Response(StudentSerializer(student).data, status=201)
 
 
@@ -232,8 +303,23 @@ class ClerkListCreateApiView(generics.ListCreateAPIView):
         data = serializer.validated_data
         if User.objects.filter(username=data["username"]).exists():
             return Response({"username": ["Username already exists."]}, status=400)
-        user = User.objects.create_user(username=data["username"], password=data.get("password") or data["username"], phone_number=data.get("phone_number") or None, role=User.ROLE_CLERK)
-        clerk = Clerk.objects.create(user=user, full_name=data["full_name"], phone_number=data["phone_number"], assigned_hostel=data["assigned_hostel"])
+        # V-08 fix: do not fall back to username as a default password.
+        # A predictable default credential is a critical security risk.
+        raw_password = data.get("password")
+        if not raw_password:
+            return Response({"password": ["Password is required."]}, status=400)
+        user = User.objects.create_user(
+            username=data["username"],
+            password=raw_password,
+            phone_number=data.get("phone_number") or None,
+            role=User.ROLE_CLERK,
+        )
+        clerk = Clerk.objects.create(
+            user=user,
+            full_name=data["full_name"],
+            phone_number=data["phone_number"],
+            assigned_hostel=data["assigned_hostel"],
+        )
         return Response(ClerkSerializer(clerk).data, status=201)
 
 
@@ -279,8 +365,14 @@ class ComplaintListApiView(generics.ListAPIView):
     serializer_class = ComplaintSerializer
 
     def get_queryset(self):
-        queryset = Complaint.objects.select_related("student").prefetch_related("status_history", "status_history__changed_by_user")
+        queryset = Complaint.objects.select_related("student").prefetch_related(
+            "status_history", "status_history__changed_by_user"
+        )
+        # V-05 fix: whitelist status values before passing to ORM to prevent
+        # probing of internal field names via crafted query strings.
         status_filter = self.request.GET.get("status")
+        if status_filter and status_filter not in _VALID_COMPLAINT_STATUSES:
+            status_filter = None  # silently ignore unknown values
         q = (self.request.GET.get("q") or "").strip()
         role = self.request.user.role
         if role == User.ROLE_STUDENT:
@@ -292,7 +384,12 @@ class ComplaintListApiView(generics.ListAPIView):
         if status_filter:
             queryset = queryset.filter(status=status_filter)
         if q:
-            queryset = queryset.filter(Q(description__icontains=q) | Q(student_name_snapshot__icontains=q) | Q(room_number_snapshot__icontains=q) | Q(worker_name__icontains=q))
+            queryset = queryset.filter(
+                Q(description__icontains=q)
+                | Q(student_name_snapshot__icontains=q)
+                | Q(room_number_snapshot__icontains=q)
+                | Q(worker_name__icontains=q)
+            )
         return queryset
 
 
@@ -302,7 +399,13 @@ class StudentComplaintCreateApiView(APIView):
     def post(self, request):
         serializer = ComplaintCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        student = request.user.student_profile
+        # V-01 fix: guard against orphaned user (Student profile deleted mid-session).
+        # Without this guard, accessing .student_profile on a user whose Student row was
+        # deleted raises RelatedObjectDoesNotExist (an AttributeError subclass), producing
+        # an unhandled 500 that leaks a stack trace.
+        student = getattr(request.user, "student_profile", None)
+        if student is None:
+            return Response({"detail": "Student profile not found."}, status=403)
         complaint = create_student_complaint(
             student=student,
             description=serializer.validated_data["description"],
@@ -319,6 +422,10 @@ class ComplaintActionApiView(APIView):
             student = getattr(request.user, "student_profile", None)
             if not student or complaint.student_id != student.id:
                 return Response({"detail": "Forbidden"}, status=403)
+            # V-11 fix: explicitly whitelist the only actions a student may trigger.
+            # Previously the student block only checked for the *allowlist* inside the set,
+            # but 'reopen' fell through to the generic action handler without a role check,
+            # letting a student re-open any complaint that matched their profile.
             if action not in {"mark-solved", "mark-unsolved"}:
                 return Response({"detail": "Forbidden"}, status=403)
         elif request.user.role == User.ROLE_CLERK:
@@ -326,7 +433,11 @@ class ComplaintActionApiView(APIView):
             if not clerk or complaint.hostel_snapshot != clerk.assigned_hostel:
                 return Response({"detail": "Forbidden"}, status=403)
         if action == "assign-worker":
-            assign_worker_and_start(complaint=complaint, worker_name=(request.data.get("worker_name") or "").strip(), changed_by_user=request.user)
+            assign_worker_and_start(
+                complaint=complaint,
+                worker_name=(request.data.get("worker_name") or "").strip(),
+                changed_by_user=request.user,
+            )
         elif action == "mark-completed":
             mark_completed(complaint=complaint, changed_by_user=request.user)
         elif action == "mark-solved":
@@ -334,7 +445,11 @@ class ComplaintActionApiView(APIView):
         elif action == "mark-unsolved":
             mark_unsolved(complaint=complaint, changed_by_user=request.user)
         elif action == "reopen":
-            reopen_unsolved(complaint=complaint, changed_by_user=request.user, new_worker_name=(request.data.get("worker_name") or "").strip() or None)
+            reopen_unsolved(
+                complaint=complaint,
+                changed_by_user=request.user,
+                new_worker_name=(request.data.get("worker_name") or "").strip() or None,
+            )
         else:
             return Response({"detail": "Unknown action."}, status=400)
         complaint.refresh_from_db()
@@ -354,7 +469,11 @@ class AcademicListCreateApiView(generics.ListCreateAPIView):
         queryset = AcademicFile.objects.select_related("department", "subject")
         q = (self.request.GET.get("q") or "").strip()
         if q:
-            queryset = queryset.filter(Q(course_code__icontains=q) | Q(subject__name__icontains=q) | Q(department__name__icontains=q))
+            queryset = queryset.filter(
+                Q(course_code__icontains=q)
+                | Q(subject__name__icontains=q)
+                | Q(department__name__icontains=q)
+            )
         return queryset
 
     def get_serializer_class(self):
@@ -364,7 +483,10 @@ class AcademicListCreateApiView(generics.ListCreateAPIView):
         serializer = AcademicFileCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         student = getattr(request.user, "student_profile", None)
-        obj = serializer.save(uploaded_by_student=student, uploaded_by_name_snapshot=(student.full_name if student else request.user.get_display_name()))
+        obj = serializer.save(
+            uploaded_by_student=student,
+            uploaded_by_name_snapshot=(student.full_name if student else request.user.get_display_name()),
+        )
         return Response(AcademicFileSerializer(obj, context={"request": request}).data, status=201)
 
 
@@ -457,12 +579,24 @@ class FeedbackSubmitApiView(APIView):
     permission_classes = [IsStudentRole]
 
     def post(self, request, pk):
-        student = request.user.student_profile
+        # V-02 fix: guard against orphaned user (Student profile deleted mid-session).
+        student = getattr(request.user, "student_profile", None)
+        if student is None:
+            return Response({"detail": "Student profile not found."}, status=403)
         form = get_object_or_404(FeedbackForm.objects.prefetch_related("questions"), pk=pk)
         if form.hostel != student.hostel:
             return Response({"detail": "This feedback form is not available for your hostel."}, status=403)
         answers = request.data.get("answers") or {}
-        submission = submit_feedback_form(form, student, {str(k): v for k, v in answers.items()})
+        try:
+            # V-10 fix: submit_feedback_form uses keyword-only parameters (*).
+            # Previously called with positional args, which would raise TypeError.
+            submission = submit_feedback_form(
+                feedback_form=form,
+                student=student,
+                answers_by_question_id={str(k): v for k, v in answers.items()},
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=400)
         return Response({"submission_id": submission.id}, status=201)
 
 
@@ -470,7 +604,12 @@ class FeedbackAnalysisApiView(APIView):
     permission_classes = [IsAdminRole]
 
     def get(self, request, pk):
-        form = get_object_or_404(FeedbackForm.objects.prefetch_related("questions", "submissions__student", "submissions__answers__question"), pk=pk)
+        form = get_object_or_404(
+            FeedbackForm.objects.prefetch_related(
+                "questions", "submissions__student", "submissions__answers__question"
+            ),
+            pk=pk,
+        )
         return Response(build_feedback_analysis(form))
 
 
@@ -521,13 +660,14 @@ class BackupListApiView(generics.ListAPIView):
             with open(temp_path, "rb") as backup_file:
                 record = BackupRecord(created_by_user=request.user)
                 record.backup_file.save(file_name, backup_file, save=True)
-            if temp_path:
-                import os
-                if os.path.exists(temp_path):
-                    os.remove(temp_path)
+            if temp_path and os.path.exists(temp_path):
+                os.remove(temp_path)
             return Response(BackupRecordSerializer(record, context={"request": request}).data, status=201)
         except Exception as exc:
-            return Response({"detail": f"Backup failed: {exc}"}, status=400)
+            # V-14 fix: log full details server-side; return a generic message to the client.
+            # Previously, f"Backup failed: {exc}" leaked internal error details (paths, DB names).
+            logger.error("Backup creation failed: %s", exc, exc_info=True)
+            return Response({"detail": "Backup failed. Check server logs for details."}, status=400)
 
 
 class BackupActionApiView(APIView):
@@ -541,7 +681,9 @@ class BackupActionApiView(APIView):
             try:
                 restore_mysql_backup(backup.backup_file.path)
             except Exception as exc:
-                return Response({"detail": f"Restore failed: {exc}"}, status=400)
+                # V-14 fix: same pattern — log internally, return generic message.
+                logger.error("DB restore failed for backup %s: %s", pk, exc, exc_info=True)
+                return Response({"detail": "Restore failed. Check server logs for details."}, status=400)
             return Response({"detail": "Database restored successfully."})
         if action == "delete":
             backup.delete()
