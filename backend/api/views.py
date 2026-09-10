@@ -610,7 +610,14 @@ class FeedbackAnalysisApiView(APIView):
             ),
             pk=pk,
         )
-        return Response(build_feedback_analysis(form))
+        data = build_feedback_analysis(form)
+        from .serializers import FeedbackQuestionSerializer
+        data["questions"] = FeedbackQuestionSerializer(data["questions"], many=True).data
+        # Serialize question objects inside question_stats if present
+        for stat in data.get("question_stats", []):
+            if "question" in stat and hasattr(stat["question"], "id"):
+                stat["question"] = FeedbackQuestionSerializer(stat["question"]).data
+        return Response(data)
 
 
 class LockedAccountsApiView(APIView):
